@@ -23,3 +23,12 @@ func (r *UserRepository) GetUserByUsername(username string) (*model.User, error)
 	}
 	return &user, nil
 }
+
+// GetUserByUUID 通过 UUID 查询用户
+func (r *UserRepository) GetUserByUUID(uuid string) (*model.User, error) {
+	var user model.User
+	if err := DB.Where("uuid = ?", uuid).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

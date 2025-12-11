@@ -31,6 +31,7 @@ type LoginRequest struct {
 // LoginResponse 登录响应
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIs..."`
+	UUID  string `json:"uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 // Register 用户注册
@@ -77,13 +78,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.svc.Login(req.Username, req.Password)
+	token, user, err := h.svc.Login(req.Username, req.Password)
 	if err != nil {
 		HandleError(c, err)
 		return
 	}
 
-	Success(c, gin.H{"token": token})
+	Success(c, LoginResponse{Token: token, UUID: user.UUID})
 }
 
 // RegisterRoutes 注册用户相关路由

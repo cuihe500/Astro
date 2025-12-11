@@ -2,15 +2,18 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/cuihe500/astro/internal/handler"
+	"github.com/cuihe500/astro/internal/k8s"
 	"github.com/cuihe500/astro/internal/middleware"
 	"github.com/cuihe500/astro/internal/repository"
 	"github.com/cuihe500/astro/pkg/config"
+	"github.com/cuihe500/astro/pkg/logger"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 
 	_ "github.com/cuihe500/astro/docs"
 )
@@ -31,13 +34,29 @@ func main() {
 	// 加载配置
 	cfg, err := config.Load("configs/config.yaml")
 	if err != nil {
-		log.Fatalf("加载配置失败: %v", err)
+		fmt.Fprintf(os.Stderr, "加载配置失败: %v\n", err)
+		os.Exit(1)
 	}
+
+	// 初始化日志
+	if err := logger.Init(&cfg.Log); err != nil {
+		fmt.Fprintf(os.Stderr, "初始化日志失败: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Sync()
+
+	logger.Info("Astro 服务启动中...")
 
 	// 初始化数据库
 	if err := repository.Init(&cfg.Database); err != nil {
-		log.Fatalf("初始化数据库失败: %v", err)
+		logger.Fatal("初始化数据库失败", zap.Error(err))
 	}
+
+	// 初始化 K8s 客户端
+	if err := k8s.Init(cfg.Kubernetes.Kubeconfig); err != nil {
+		logger.Fatal("初始化 K8s 客户端失败", zap.Error(err))
+	}
+	logger.Info("K8s 客户端初始化成功")
 
 	// 设置运行模式
 	gin.SetMode(cfg.Server.Mode)
@@ -63,14 +82,14 @@ func main() {
 	authApi := api.Group("")
 	authApi.Use(middleware.Auth())
 	{
-		// 后续在此处注册需要认证的路由
-		// handler.RegisterAppRoutes(authApi)
+		// 应用管理路由
+		handler.RegisterAppRoutes(authApi)
 	}
 
 	// 启动服务
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
-	log.Printf("服务启动在 %s", addr)
+	logger.Info("服务启动", zap.String("addr", addr))
 	if err := r.Run(addr); err != nil {
-		log.Fatalf("启动服务失败: %v", err)
+		logger.Fatal("启动服务失败", zap.Error(err))
 	}
 }

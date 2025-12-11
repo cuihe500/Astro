@@ -20,34 +20,36 @@ const (
 	ErrNotFound     Code = 10004 // 资源不存在
 
 	// 用户相关错误 2xxxx
-	ErrUserExists       Code = 20001 // 用户已存在
-	ErrUserNotFound     Code = 20002 // 用户不存在
-	ErrPasswordWrong    Code = 20003 // 密码错误
-	ErrEmailExists      Code = 20004 // 邮箱已被使用
-	ErrUserDisabled     Code = 20005 // 用户已被禁用
-	ErrInvalidUsername  Code = 20006 // 用户名格式无效
-	ErrInvalidPassword  Code = 20007 // 密码格式无效
-	ErrInvalidEmail     Code = 20008 // 邮箱格式无效
-	ErrLoginFailed      Code = 20009 // 登录失败
-	ErrRegisterFailed   Code = 20010 // 注册失败
-	ErrTokenExpired     Code = 20011 // Token 已过期
-	ErrTokenInvalid     Code = 20012 // Token 无效
+	ErrUserExists      Code = 20001 // 用户已存在
+	ErrUserNotFound    Code = 20002 // 用户不存在
+	ErrPasswordWrong   Code = 20003 // 密码错误
+	ErrEmailExists     Code = 20004 // 邮箱已被使用
+	ErrUserDisabled    Code = 20005 // 用户已被禁用
+	ErrInvalidUsername Code = 20006 // 用户名格式无效
+	ErrInvalidPassword Code = 20007 // 密码格式无效
+	ErrInvalidEmail    Code = 20008 // 邮箱格式无效
+	ErrLoginFailed     Code = 20009 // 登录失败
+	ErrRegisterFailed  Code = 20010 // 注册失败
+	ErrTokenExpired    Code = 20011 // Token 已过期
+	ErrTokenInvalid    Code = 20012 // Token 无效
 
 	// 应用相关错误 21xxx
-	ErrAppNotFound    Code = 21001 // 应用不存在
-	ErrAppExists      Code = 21002 // 应用已存在
-	ErrAppCreateFail  Code = 21003 // 创建应用失败
-	ErrAppUpdateFail  Code = 21004 // 更新应用失败
-	ErrAppDeleteFail  Code = 21005 // 删除应用失败
-	ErrAppStartFail   Code = 21006 // 启动应用失败
-	ErrAppStopFail    Code = 21007 // 停止应用失败
-	ErrAppRestartFail Code = 21008 // 重启应用失败
+	ErrAppNotFound     Code = 21001 // 应用不存在
+	ErrAppExists       Code = 21002 // 应用已存在
+	ErrAppCreateFail   Code = 21003 // 创建应用失败
+	ErrAppUpdateFail   Code = 21004 // 更新应用失败
+	ErrAppDeleteFail   Code = 21005 // 删除应用失败
+	ErrAppStartFail    Code = 21006 // 启动应用失败
+	ErrAppStopFail     Code = 21007 // 停止应用失败
+	ErrAppRestartFail  Code = 21008 // 重启应用失败
+	ErrAppCreateFailed Code = 21009 // 创建应用失败（别名）
 
 	// 系统错误 3xxxx
-	ErrInternal   Code = 30001 // 服务器内部错误
-	ErrDatabase   Code = 30002 // 数据库错误
-	ErrK8s        Code = 30003 // K8s 操作错误
-	ErrK8sConnect Code = 30004 // K8s 连接失败
+	ErrInternal     Code = 30001 // 服务器内部错误
+	ErrDatabase     Code = 30002 // 数据库错误
+	ErrK8s          Code = 30003 // K8s 操作错误
+	ErrK8sConnect   Code = 30004 // K8s 连接失败
+	ErrK8sOperation Code = 30005 // K8s 操作失败
 )
 
 // codeMessages 错误码对应的默认消息
@@ -75,20 +77,22 @@ var codeMessages = map[Code]string{
 	ErrTokenInvalid:    "Token 无效",
 
 	// 应用相关错误
-	ErrAppNotFound:    "应用不存在",
-	ErrAppExists:      "应用已存在",
-	ErrAppCreateFail:  "创建应用失败",
-	ErrAppUpdateFail:  "更新应用失败",
-	ErrAppDeleteFail:  "删除应用失败",
-	ErrAppStartFail:   "启动应用失败",
-	ErrAppStopFail:    "停止应用失败",
-	ErrAppRestartFail: "重启应用失败",
+	ErrAppNotFound:     "应用不存在",
+	ErrAppExists:       "应用已存在",
+	ErrAppCreateFail:   "创建应用失败",
+	ErrAppUpdateFail:   "更新应用失败",
+	ErrAppDeleteFail:   "删除应用失败",
+	ErrAppStartFail:    "启动应用失败",
+	ErrAppStopFail:     "停止应用失败",
+	ErrAppRestartFail:  "重启应用失败",
+	ErrAppCreateFailed: "创建应用失败",
 
 	// 系统错误
-	ErrInternal:   "服务器内部错误",
-	ErrDatabase:   "数据库错误",
-	ErrK8s:        "K8s 操作错误",
-	ErrK8sConnect: "K8s 连接失败",
+	ErrInternal:     "服务器内部错误",
+	ErrDatabase:     "数据库错误",
+	ErrK8s:          "K8s 操作错误",
+	ErrK8sConnect:   "K8s 连接失败",
+	ErrK8sOperation: "K8s 操作失败",
 }
 
 // Int 返回错误码的整数值

@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,10 +18,17 @@ type BaseModel struct {
 // User 用户模型
 type User struct {
 	BaseModel
+	UUID     string `gorm:"type:char(36);uniqueIndex;not null" json:"uuid"`
 	Username string `gorm:"size:64;uniqueIndex;not null" json:"username"`
 	Password string `gorm:"size:128;not null" json:"-"`
 	Email    string `gorm:"size:128;uniqueIndex" json:"email"`
 	Status   int    `gorm:"default:1" json:"status"`
+}
+
+// BeforeCreate 创建用户前自动生成 UUID
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	u.UUID = uuid.New().String()
+	return nil
 }
 
 // App 应用模型
