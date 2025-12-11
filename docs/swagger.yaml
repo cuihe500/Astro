@@ -1,0 +1,123 @@
+basePath: /api/v1
+definitions:
+  handler.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+    type: object
+  handler.RegisterRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  handler.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Astro 容器即服务平台 API 文档
+  title: Astro API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录获取 Token
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 用户登录
+      tags:
+      - 用户
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: 创建新用户账号
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 用户注册
+      tags:
+      - 用户
+securityDefinitions:
+  Bearer:
+    description: 请输入 Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

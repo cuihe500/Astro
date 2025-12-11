@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  host: localhost
+  port: 3306
+  user: root
+  password: ""
+  dbname: astro
+  charset: utf8mb4
+
+jwt:
+  secret: astro-secret-key
+  expire: 24h
+
+log:
+  level: debug
+  file: logs/astro.log

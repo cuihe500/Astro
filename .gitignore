@@ -1,0 +1,32 @@
+# 二进制文件
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试文件
+*.test
+*.out
+coverage.txt
+
+# 依赖
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志
+logs/
+*.log
+
+# 配置（敏感信息）
+configs/config.local.yaml
+
+# 系统文件
+.DS_Store
+Thumbs.db
