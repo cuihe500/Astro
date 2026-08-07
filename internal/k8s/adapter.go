@@ -316,12 +316,18 @@ func (a *ClientGoAdapter) GetAppLogs(ctx context.Context, name, namespace string
 	if err != nil {
 		return "", fmt.Errorf("获取日志流失败: %w", err)
 	}
-	defer stream.Close()
 
 	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, stream)
-	if err != nil {
-		return "", fmt.Errorf("读取日志失败: %w", err)
+	_, copyErr := io.Copy(buf, stream)
+	closeErr := stream.Close()
+	if copyErr != nil {
+		if closeErr != nil {
+			return "", fmt.Errorf("读取日志失败: %w；关闭日志流失败: %w", copyErr, closeErr)
+		}
+		return "", fmt.Errorf("读取日志失败: %w", copyErr)
+	}
+	if closeErr != nil {
+		return "", fmt.Errorf("关闭日志流失败: %w", closeErr)
 	}
 
 	return buf.String(), nil

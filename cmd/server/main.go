@@ -43,7 +43,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "初始化日志失败: %v\n", err)
 		os.Exit(1)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			fmt.Fprintf(os.Stderr, "刷新日志失败: %v\n", err)
+		}
+	}()
 
 	logger.Info("Astro 服务启动中...")
 
