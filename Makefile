@@ -19,4 +19,4 @@ lint:
 	golangci-lint run
 
 swagger:
-	swag init -g cmd/server/main.go -o docs
+	go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/server/main.go -o docs

@@ -10,6 +10,24 @@ type Config struct {
 	JWT        JWTConfig        `mapstructure:"jwt"`
 	Log        LogConfig        `mapstructure:"log"`
 	Kubernetes KubernetesConfig `mapstructure:"kubernetes"`
+	OAuth2     OAuth2Config     `mapstructure:"oauth2"`
+}
+
+// OAuth2Config OAuth2/OIDC 配置
+type OAuth2Config struct {
+	Providers map[string]OAuth2ProviderConfig `mapstructure:"providers"`
+}
+
+// OAuth2ProviderConfig OAuth2/OIDC Provider 配置
+type OAuth2ProviderConfig struct {
+	Enabled      bool     `mapstructure:"enabled"`
+	ClientID     string   `mapstructure:"client_id"`
+	ClientSecret string   `mapstructure:"client_secret"`
+	RedirectURL  string   `mapstructure:"redirect_url"`
+	AuthURL      string   `mapstructure:"auth_url"`
+	TokenURL     string   `mapstructure:"token_url"`
+	UserInfoURL  string   `mapstructure:"userinfo_url"`
+	Scopes       []string `mapstructure:"scopes"`
 }
 
 // KubernetesConfig K8s 客户端配置

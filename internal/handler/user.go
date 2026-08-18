@@ -6,12 +6,14 @@ import (
 )
 
 type UserHandler struct {
-	svc *service.UserService
+	svc       *service.UserService
+	oauth2Svc *service.OAuth2Service
 }
 
 func NewUserHandler() *UserHandler {
 	return &UserHandler{
-		svc: service.NewUserService(),
+		svc:       service.NewUserService(),
+		oauth2Svc: service.NewOAuth2Service(),
 	}
 }
 
@@ -32,6 +34,11 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIs..."`
 	UUID  string `json:"uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
+}
+
+// OAuth2LoginResponse OAuth2 登录入口响应
+type OAuth2LoginResponse struct {
+	AuthURL string `json:"auth_url" example:"https://auth.example.com/application/o/authorize/?client_id=astro"`
 }
 
 // Register 用户注册
@@ -87,9 +94,64 @@ func (h *UserHandler) Login(c *gin.Context) {
 	Success(c, LoginResponse{Token: token, UUID: user.UUID})
 }
 
+// OAuth2Login 获取 OAuth2 授权 URL
+// @Summary OAuth2 登录入口
+// @Description 获取 OAuth2/OIDC Provider 授权 URL
+// @Tags 用户
+// @Produce json
+// @Param provider path string true "Provider 名称" example(authentik)
+// @Success 200 {object} Response{data=OAuth2LoginResponse} "获取成功"
+// @Failure 400 {object} Response "Provider 不可用"
+// @Router /oauth2/{provider}/login [get]
+func (h *UserHandler) OAuth2Login(c *gin.Context) {
+	provider := c.Param("provider")
+	if provider == "" {
+		BadRequest(c, "Provider 不能为空")
+		return
+	}
+
+	authURL, err := h.oauth2Svc.BuildAuthURL(provider)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	Success(c, OAuth2LoginResponse{AuthURL: authURL})
+}
+
+// OAuth2Callback 处理 OAuth2 回调
+// @Summary OAuth2 回调
+// @Description 使用授权码换取本系统 JWT
+// @Tags 用户
+// @Produce json
+// @Param provider path string true "Provider 名称" example(authentik)
+// @Param code query string true "授权码"
+// @Param state query string true "状态参数"
+// @Success 200 {object} Response{data=LoginResponse} "登录成功"
+// @Failure 400 {object} Response "参数错误"
+// @Failure 401 {object} Response "认证失败"
+// @Router /oauth2/{provider}/callback [get]
+func (h *UserHandler) OAuth2Callback(c *gin.Context) {
+	provider := c.Param("provider")
+	code := c.Query("code")
+	state := c.Query("state")
+	if provider == "" || code == "" || state == "" {
+		BadRequest(c, "provider、code、state 不能为空")
+		return
+	}
+
+	token, user, err := h.oauth2Svc.Callback(c.Request.Context(), provider, code, state)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	Success(c, LoginResponse{Token: token, UUID: user.UUID})
+}
+
 // RegisterRoutes 注册用户相关路由
 func RegisterUserRoutes(r *gin.RouterGroup) {
 	h := NewUserHandler()
 	r.POST("/register", h.Register)
 	r.POST("/login", h.Login)
+	r.GET("/oauth2/:provider/login", h.OAuth2Login)
+	r.GET("/oauth2/:provider/callback", h.OAuth2Callback)
 }

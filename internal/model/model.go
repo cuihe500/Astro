@@ -31,6 +31,14 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+// OAuthIdentity OAuth2 身份模型
+type OAuthIdentity struct {
+	BaseModel
+	Provider       string `gorm:"size:64;uniqueIndex:idx_oauth_provider_user;not null" json:"provider"`
+	ProviderUserID string `gorm:"size:128;uniqueIndex:idx_oauth_provider_user;not null" json:"provider_user_id"`
+	UserID         uint   `gorm:"index;not null" json:"user_id"`
+}
+
 // App 应用模型
 type App struct {
 	BaseModel
