@@ -13,6 +13,7 @@
 | [错误处理](./error-handling.md) | errcode 分段、分层错误转换、统一响应 | ✅ 已填写 |
 | [质量规范](./quality-guidelines.md) | Makefile 命令、校验/权限分层、禁止模式 | ✅ 已填写 |
 | [日志规范](./logging-guidelines.md) | pkg/logger 用法、级别、敏感信息 | ✅ 已填写 |
+| [认证规范](./auth-guidelines.md) | JWT 与 OAuth2/OIDC 登录契约、状态校验、身份映射 | ✅ 已填写 |
 
 ---
 

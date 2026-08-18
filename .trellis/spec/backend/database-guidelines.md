@@ -7,7 +7,7 @@
 ## 连接与迁移
 
 - `internal/repository/db.go` 的 `Init()` 建立连接并持有包级变量 `repository.DB`。
-- **迁移 = AutoMigrate**：新模型必须加进 `db.go` 的 `AutoMigrate(&model.User{}, &model.App{})` 列表，没有 SQL 迁移文件。
+- **迁移 = AutoMigrate**：新模型必须加进 `db.go` 的 `AutoMigrate(&model.User{}, &model.App{}, &model.OAuthIdentity{})` 列表，没有 SQL 迁移文件。
 
 ## 模型（internal/model/model.go）
 
