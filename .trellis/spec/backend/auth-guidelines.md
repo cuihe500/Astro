@@ -23,6 +23,19 @@
   - 公开路由。
   - 成功返回统一响应，`data.token` 和 `data.uuid` 与本地 `/login` 对齐。
 
+#### 前端回调
+
+- 用户可见的认证品牌为 `BytCloud Auth`；`authentik` 是内部 provider key，只出现在代码、配置、技术文档和运维上下文。
+- 本地开发前端回调地址为 `http://localhost:5173/oauth2/authentik/callback`。后端 `redirect_url`、Provider 注册地址和 code exchange 使用的地址必须完全一致。
+- 前端 callback loader 只把当前 URL 中的一次性 `code`、`state` 交给后端 callback API，成功后保存后端签发的 JWT；不保存 authorization code 或 state。
+- Provider 未启用、Enrollment Flow 拒绝或 callback 失败时，前端展示 BytCloud Auth 的可理解错误并保留账号密码备用入口，不在前端复制外部注册流程。
+
+#### 前端 API 消费
+
+- 前端所有请求必须解析 `code`、`message` 和可选 `data`；只有 `code === 0` 才视为成功，不能只依据 HTTP 200。
+- 受保护请求必须发送 `Authorization: Bearer <JWT>`；JWT 只保存在浏览器会话存储边界，不写入日志或页面。
+- 收到 `10002`、`20011` 或 `20012` 时，前端必须删除本地 JWT 并回到登录页；其他业务错误优先展示后端 `message`。
+
 #### Config
 
 ```yaml
@@ -32,7 +45,7 @@ oauth2:
       enabled: false
       client_id: ""
       client_secret: ""
-      redirect_url: "http://localhost:8080/api/v1/oauth2/authentik/callback"
+      redirect_url: "http://localhost:5173/oauth2/authentik/callback"
       auth_url: "https://auth.example.com/application/o/authorize/"
       token_url: "https://auth.example.com/application/o/token/"
       userinfo_url: "https://auth.example.com/application/o/userinfo/"
@@ -76,7 +89,7 @@ oauth2:
 
 - Good：Authentik 返回 `sub`、`email`、`preferred_username`，系统创建 User + OAuthIdentity，并返回 `{token, uuid}`。
 - Base：Authentik 不返回 email，系统使用本地占位邮箱，仍以 `provider + sub` 识别用户。
-- Bad：只按 email 匹配已有本地用户，会造成账号接管风险，禁止这样实现。
+- Bad：只按 email 匹配用户，会造成账号接管风险，禁止这样实现。
 
 ### 6. Tests Required
 
