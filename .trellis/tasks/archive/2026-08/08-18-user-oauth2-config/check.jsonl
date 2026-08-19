@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查时加载后端规范索引"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"检查新增 OAuth2 代码分层是否正确"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查模型、Repository、AutoMigrate 是否符合规范"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查错误码和统一响应是否符合规范"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查测试、Swagger 和 Makefile 命令要求"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"检查敏感 OAuth2 信息是否未泄露"}

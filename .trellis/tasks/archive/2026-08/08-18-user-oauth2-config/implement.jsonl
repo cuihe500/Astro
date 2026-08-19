@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端规范索引，确保实现遵循项目约束"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"OAuth2 代码需要遵循 handler/service/repository 分层"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"新增 OAuthIdentity 模型和 AutoMigrate 必须遵循数据库规范"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"OAuth2 错误需要按 errcode 和分层转换处理"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现和验证命令需遵循项目质量规范"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"OAuth2 secret/token/code 不能泄露到日志"}
