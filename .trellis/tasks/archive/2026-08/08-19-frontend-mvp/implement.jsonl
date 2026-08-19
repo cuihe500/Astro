@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"加载 Astro 后端规范索引与最高优先级约束"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"OAuth2 回调、JWT 与敏感信息契约"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"前端必须按统一 code/message/data 响应处理错误"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Makefile 命令、验证与禁止模式"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"共享 API 与会话边界应消除页面间重复契约解析"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查后端响应到前端类型与展示的数据流"}
+{"file":".trellis/tasks/08-19-frontend-mvp/research/repository-evidence.md","reason":"已核实的 API、OAuth2、浏览器和 UI 设计证据"}

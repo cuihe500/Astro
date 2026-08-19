@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查任务是否符合项目总规范"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"检查 OAuth2 回调、JWT 与敏感信息边界"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查前端是否正确消费统一业务错误码"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查全部验证均通过 Makefile 目标执行"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查统一 API、会话与状态映射没有散落重复"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查 API 字段、可选 data 和页面状态没有契约漂移"}
+{"file":".trellis/tasks/08-19-frontend-mvp/research/repository-evidence.md","reason":"核对实现是否符合已验证的仓库与 UI 事实"}
