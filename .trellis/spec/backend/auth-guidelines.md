@@ -58,6 +58,7 @@ oauth2:
 - OAuth2 用户唯一身份必须使用 `provider + sub/id`，不能只按 email 识别。
 - OAuth2 创建的新用户不能拥有可用本地密码；本地 `/login` 只是 fallback，不自动登录 OAuth2-only 用户。
 - `client_secret`、access token、authorization code 不得进入日志、响应和 Swagger 示例。
+- 生产环境 JWT secret 必须通过环境变量或 Secret 管理系统注入，不得使用仓库中的示例/默认值；配置加载或启动时发现 secret 为空、仍为默认值或强度不足必须失败。
 
 ### 4. Validation & Error Matrix
 

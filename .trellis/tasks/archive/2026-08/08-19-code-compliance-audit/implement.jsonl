@@ -1,0 +1,8 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"审查参数校验、分层职责、导出注释、Makefile 检查和禁止模式。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"审查错误码、service 错误转换、统一响应和错误返回值处理。"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"审查日志入口、结构化字段、敏感信息和日志级别。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"审查 GORM 模型约束、AutoMigrate、Repository 查询和错误处理。"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"审查 JWT/OAuth2/OIDC state、身份映射和敏感凭据契约。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"审查 handler/service/repository/K8s 分层边界与目录职责。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"指导 handler 到 service、存储和 K8s 的数据流核验。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查重复逻辑、共享契约和候选抽象是否造成合规问题。"}

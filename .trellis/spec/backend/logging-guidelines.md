@@ -42,5 +42,6 @@ logger.Error("K8s 创建失败", zap.Error(err), zap.Uint("user_id", userID))
 ## 禁止
 
 - `log.Println` / `fmt.Println` 打日志。
+- HTTP 请求日志不得记录 OAuth2 callback 的 `code`、`state` 或其他凭据；使用 Gin 请求日志时必须避免直接输出 `URL.RawQuery`，应脱敏或跳过该路由。
 - 日志中输出密码、Token、JWT Secret 等敏感信息（模型层已用 `json:"-"` 隐藏 Password，日志同样不许打）。
 - 在热路径循环里打 Info 及以上级别日志。

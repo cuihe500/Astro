@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"按质量规范复核静态扫描、Makefile、测试和禁止模式结果。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"按错误处理规范复核所有候选错误传播和响应结论。"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"按日志规范复核标准输出、结构化日志和敏感信息结论。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"按数据库规范复核查询参数化、模型约束、迁移和忽略错误。"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"按认证规范复核 OAuth2 state、provider 身份和 JWT 安全结论。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"按目录和分层规范复核跨层调用与职责结论。"}

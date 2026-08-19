@@ -41,8 +41,7 @@ if app.UserID != userID {
 每个 handler 方法带 swag 注解（`@Summary` / `@Tags` / `@Security Bearer` / `@Router`），格式参照 `internal/handler/app.go`。改注解后跑 `make swagger`。
 
 ## 测试现状
-
-**当前代码库没有任何 `_test.go` 文件**（技术债，已知现状）。新增复杂业务逻辑（service 层分支/权限判断）建议补最小化表驱动测试，但不强制补历史欠账。有测试后用 `make test` 跑。
+**当前代码库已有 `internal/service/oauth2_test.go`，覆盖 OAuth2 state 生成与校验；其他业务层仍缺少测试**（技术债）。新增复杂业务逻辑（service 层分支/权限判断）建议补最小化表驱动测试，但不强制补历史欠账。有测试后用 `make test` 跑。
 
 ## 禁止模式
 
