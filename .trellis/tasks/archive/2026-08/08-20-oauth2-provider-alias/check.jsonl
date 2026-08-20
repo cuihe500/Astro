@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查实现是否符合项目总规范"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"检查公开别名、内部 Provider、state 与身份映射契约"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查错误码和客户端消息没有泄露内部名称"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查 Swagger 和全部 Makefile 质量门"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查别名映射只有一个真实来源且没有散落重复"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查浏览器 URL 到数据库身份键的跨层数据流没有混用"}
+{"file":".trellis/tasks/08-20-oauth2-provider-alias/research/repository-evidence.md","reason":"对照已识别泄露面和兼容性风险进行回归检查"}

@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"加载 Astro 后端规范索引和项目约束"}
+{"file":".trellis/spec/backend/auth-guidelines.md","reason":"OAuth2 公开别名、内部身份键、state 与敏感信息契约"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"公开旧别名拒绝时必须使用统一错误响应且不回显内部名称"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Swagger、Makefile 验证与最小测试要求"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"公开别名解析应集中在单一边界，避免前后端散落兼容逻辑"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对公开 URL、state、配置与数据库身份键的完整数据流"}
+{"file":".trellis/tasks/08-20-oauth2-provider-alias/research/repository-evidence.md","reason":"当前泄露点、兼容性约束和验证证据"}
