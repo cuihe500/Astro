@@ -22,7 +22,12 @@ import (
 	"gorm.io/gorm"
 )
 
-const oauth2StateTTL = 10 * time.Minute
+const (
+	oauth2StateTTL = 10 * time.Minute
+
+	bytCloudAuthAlias       = "bytcloudauth"
+	bytCloudAuthProviderKey = "authentik"
+)
 
 // OAuth2Service OAuth2 登录服务
 type OAuth2Service struct {
@@ -39,13 +44,18 @@ func NewOAuth2Service() *OAuth2Service {
 }
 
 // BuildAuthURL 生成 OAuth2 授权 URL
-func (s *OAuth2Service) BuildAuthURL(provider string) (string, error) {
-	providerConfig, err := s.getProviderConfig(provider)
+func (s *OAuth2Service) BuildAuthURL(providerAlias string) (string, error) {
+	providerKey, err := resolveOAuth2Provider(providerAlias)
 	if err != nil {
 		return "", err
 	}
 
-	state, err := generateOAuth2State(provider, config.GlobalConfig.JWT.Secret, time.Now())
+	providerConfig, err := s.getProviderConfig(providerKey)
+	if err != nil {
+		return "", err
+	}
+
+	state, err := generateOAuth2State(providerAlias, config.GlobalConfig.JWT.Secret, time.Now())
 	if err != nil {
 		return "", errcode.New(errcode.ErrInternal)
 	}
@@ -54,12 +64,17 @@ func (s *OAuth2Service) BuildAuthURL(provider string) (string, error) {
 }
 
 // Callback 处理 OAuth2 回调并签发 JWT
-func (s *OAuth2Service) Callback(ctx context.Context, provider, code, state string) (string, *model.User, error) {
-	providerConfig, err := s.getProviderConfig(provider)
+func (s *OAuth2Service) Callback(ctx context.Context, providerAlias, code, state string) (string, *model.User, error) {
+	providerKey, err := resolveOAuth2Provider(providerAlias)
 	if err != nil {
 		return "", nil, err
 	}
-	if err := validateOAuth2State(state, provider, config.GlobalConfig.JWT.Secret, time.Now()); err != nil {
+
+	providerConfig, err := s.getProviderConfig(providerKey)
+	if err != nil {
+		return "", nil, err
+	}
+	if err := validateOAuth2State(state, providerAlias, config.GlobalConfig.JWT.Secret, time.Now()); err != nil {
 		return "", nil, errcode.New(errcode.ErrUnauthorized)
 	}
 
@@ -73,7 +88,7 @@ func (s *OAuth2Service) Callback(ctx context.Context, provider, code, state stri
 		return "", nil, err
 	}
 
-	user, err := s.findOrCreateUser(provider, userInfo)
+	user, err := s.findOrCreateUser(providerKey, userInfo)
 	if err != nil {
 		return "", nil, err
 	}
@@ -85,11 +100,23 @@ func (s *OAuth2Service) Callback(ctx context.Context, provider, code, state stri
 	return jwtToken, user, nil
 }
 
-func (s *OAuth2Service) getProviderConfig(provider string) (config.OAuth2ProviderConfig, error) {
+func resolveOAuth2Provider(providerAlias string) (string, error) {
+	if providerAlias != bytCloudAuthAlias {
+		return "", errcode.NewWithMsg(errcode.ErrBadRequest, "OAuth2 Provider 不可用")
+	}
+	return bytCloudAuthProviderKey, nil
+}
+
+// newOAuth2DatabaseError 返回不暴露内部 Provider 键的数据库错误。
+func newOAuth2DatabaseError() *errcode.Error {
+	return errcode.New(errcode.ErrDatabase)
+}
+
+func (s *OAuth2Service) getProviderConfig(providerKey string) (config.OAuth2ProviderConfig, error) {
 	if config.GlobalConfig == nil {
 		return config.OAuth2ProviderConfig{}, errcode.New(errcode.ErrInternal)
 	}
-	providerConfig, ok := config.GlobalConfig.OAuth2.Providers[provider]
+	providerConfig, ok := config.GlobalConfig.OAuth2.Providers[providerKey]
 	if !ok || !providerConfig.Enabled || providerConfig.ClientID == "" || providerConfig.ClientSecret == "" || providerConfig.RedirectURL == "" || providerConfig.AuthURL == "" || providerConfig.TokenURL == "" || providerConfig.UserInfoURL == "" {
 		return config.OAuth2ProviderConfig{}, errcode.NewWithMsg(errcode.ErrBadRequest, "OAuth2 Provider 不可用")
 	}
@@ -107,7 +134,7 @@ func (s *OAuth2Service) findOrCreateUser(provider string, userInfo oauth2UserInf
 		return s.getUserByID(identity.UserID)
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errcode.NewWithMsg(errcode.ErrDatabase, err.Error())
+		return nil, newOAuth2DatabaseError()
 	}
 
 	if userInfo.Email != "" {
@@ -116,7 +143,7 @@ func (s *OAuth2Service) findOrCreateUser(provider string, userInfo oauth2UserInf
 			return nil, errcode.New(errcode.ErrEmailExists)
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errcode.NewWithMsg(errcode.ErrDatabase, err.Error())
+			return nil, newOAuth2DatabaseError()
 		}
 	}
 
@@ -132,7 +159,7 @@ func (s *OAuth2Service) findOrCreateUser(provider string, userInfo oauth2UserInf
 	user := &model.User{Username: username, Password: "oauth2", Email: email}
 	identity = &model.OAuthIdentity{Provider: provider, ProviderUserID: providerUserID}
 	if err := s.repo.CreateOAuthUser(user, identity); err != nil {
-		return nil, errcode.NewWithMsg(errcode.ErrDatabase, err.Error())
+		return nil, newOAuth2DatabaseError()
 	}
 	return user, nil
 }
@@ -143,7 +170,7 @@ func (s *OAuth2Service) getUserByID(id uint) (*model.User, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errcode.New(errcode.ErrUserNotFound)
 		}
-		return nil, errcode.NewWithMsg(errcode.ErrDatabase, err.Error())
+		return nil, newOAuth2DatabaseError()
 	}
 	return user, nil
 }
@@ -164,7 +191,7 @@ func (s *OAuth2Service) uniqueUsername(source, provider, providerUserID string) 
 			return username, nil
 		}
 		if err != nil {
-			return "", errcode.NewWithMsg(errcode.ErrDatabase, err.Error())
+			return "", newOAuth2DatabaseError()
 		}
 	}
 	return "", errcode.New(errcode.ErrRegisterFailed)

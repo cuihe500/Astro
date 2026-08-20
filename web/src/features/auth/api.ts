@@ -1,6 +1,6 @@
 import { ApiError, request } from "../../lib/api";
 
-export const BYTCLOUD_PROVIDER_KEY = "authentik";
+export const BYTCLOUD_PROVIDER_ALIAS = "bytcloudauth";
 
 interface LoginResponse {
   token: string;
@@ -34,7 +34,7 @@ export function register(username: string, password: string, email: string): Pro
 }
 
 export async function getBytCloudAuthUrl(): Promise<string> {
-  const data = await request<AuthUrlResponse>(`/oauth2/${BYTCLOUD_PROVIDER_KEY}/login`);
+  const data = await request<AuthUrlResponse>(`/oauth2/${BYTCLOUD_PROVIDER_ALIAS}/login`);
   if (!data || typeof data.auth_url !== "string") {
     throw new ApiError(-1, "BytCloud Auth 暂时不可用，请使用账号密码登录。");
   }
@@ -57,6 +57,5 @@ export async function completeBytCloudAuth(provider: string, code: string, state
 }
 
 export function bytCloudErrorMessage(error: unknown): string {
-  const message = error instanceof Error && error.message ? error.message : "BytCloud Auth 登录失败，请重试。";
-  return message.replace(/authentik/gi, "BytCloud Auth");
+  return error instanceof Error && error.message ? error.message : "BytCloud Auth 登录失败，请重试。";
 }

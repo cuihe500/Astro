@@ -16,18 +16,21 @@
 
 #### API
 
-- `GET /api/v1/oauth2/:provider/login`
-  - 公开路由。
+- `GET /api/v1/oauth2/bytcloudauth/login`
+  - 公开路由；`bytcloudauth` 是当前唯一允许的公开 Provider 别名。
   - 返回统一响应，`data.auth_url` 是客户端可跳转的授权 URL。
-- `GET /api/v1/oauth2/:provider/callback?code=<code>&state=<state>`
+- `GET /api/v1/oauth2/bytcloudauth/callback?code=<code>&state=<state>`
   - 公开路由。
   - 成功返回统一响应，`data.token` 和 `data.uuid` 与本地 `/login` 对齐。
+- 其他公开 Provider 别名（包括内部键）返回 `ErrBadRequest`，错误消息不得回显内部键。
 
 #### 前端回调
 
-- 用户可见的认证品牌为 `BytCloud Auth`；`authentik` 是内部 provider key，只出现在代码、配置、技术文档和运维上下文。
-- 本地开发前端回调地址为 `http://localhost:5173/oauth2/authentik/callback`。后端 `redirect_url`、Provider 注册地址和 code exchange 使用的地址必须完全一致。
-- 前端 callback loader 只把当前 URL 中的一次性 `code`、`state` 交给后端 callback API，成功后保存后端签发的 JWT；不保存 authorization code 或 state。
+- 用户可见的认证品牌为 `BytCloud Auth`；`bytcloudauth` 是浏览器 URL、前端请求和 OAuth2 state 使用的公开别名。
+- 内部 Provider 键只用于后端配置和 `OAuthIdentity.Provider`，不得出现在浏览器 URL、前端构建产物、公开 API 文档、state 或客户端错误。
+- 本地开发前端回调地址为 `http://localhost:5173/oauth2/bytcloudauth/callback`；生产登记地址为 `https://astro.bytcloud.org/oauth2/bytcloudauth/callback`。后端 `redirect_url`、Provider 注册地址和 code exchange 使用的地址必须完全一致。
+- 前端 callback loader 只把当前 URL 中的一次性 `code`、`state` 交给公开 callback API，成功后保存后端签发的 JWT；不保存 authorization code 或 state。
+- 当前公开别名以外的前端 callback URL 必须重定向到 `bytcloudauth` 的错误页面，且不得转发原 URL 的 `code` 或 `state`，避免旧内部路径停留在地址栏或扩散敏感参数。
 - Provider 未启用、Enrollment Flow 拒绝或 callback 失败时，前端展示 BytCloud Auth 的可理解错误并保留账号密码备用入口，不在前端复制外部注册流程。
 
 #### 前端 API 消费
@@ -45,7 +48,7 @@ oauth2:
       enabled: false
       client_id: ""
       client_secret: ""
-      redirect_url: "http://localhost:5173/oauth2/authentik/callback"
+      redirect_url: "http://localhost:5173/oauth2/bytcloudauth/callback"
       auth_url: "https://auth.example.com/application/o/authorize/"
       token_url: "https://auth.example.com/application/o/token/"
       userinfo_url: "https://auth.example.com/application/o/userinfo/"
@@ -65,8 +68,8 @@ oauth2:
 ### 3. Contracts
 
 - 登录入口必须生成可校验的 `state`，并把它放入授权 URL。
-- `state` 至少包含 provider、过期时间、随机 nonce，并使用服务端 secret 做 HMAC 签名。
-- callback 必须校验 `state` 的签名、provider 和过期时间。
+- `state` 至少包含公开 Provider 别名、过期时间、随机 nonce，并使用服务端 secret 做 HMAC 签名；不得写入内部 Provider 键。
+- callback 必须校验 `state` 的签名、公开别名和过期时间，再映射内部键读取配置及查询身份。
 - UserInfo 第一版只依赖 OIDC 标准字段：`sub`、`email`、`preferred_username`、`name`；特殊字段映射不属于当前基础契约。
 - OAuth2 用户唯一身份必须使用 `provider + sub/id`，不能只按 email 识别。
 - OAuth2 创建的新用户不能拥有可用本地密码；本地 `/login` 只是 fallback，不自动登录 OAuth2-only 用户。
@@ -77,8 +80,8 @@ oauth2:
 
 | 条件 | 行为 |
 |------|------|
-| Provider 不存在、未启用或关键端点缺失 | 返回 `ErrBadRequest` |
-| callback 缺少 `provider`、`code` 或 `state` | handler 返回 `ErrBadRequest` |
+| 公开 Provider 别名未知、内部键被作为公开路径使用、Provider 未启用或关键端点缺失 | 返回 `ErrBadRequest`，不回显内部键 |
+| callback 缺少公开 Provider 别名、`code` 或 `state` | handler 返回 `ErrBadRequest` |
 | `state` 签名错误、provider 不匹配或过期 | 返回 `ErrUnauthorized` |
 | 换 token 失败、UserInfo 请求失败或 UserInfo 缺少 `sub/id` | 返回 `ErrLoginFailed` |
 | `provider + sub/id` 已存在 | 读取本地用户并签发 JWT |
@@ -87,9 +90,9 @@ oauth2:
 
 ### 5. Good / Base / Bad Cases
 
-- Good：Authentik 返回 `sub`、`email`、`preferred_username`，系统创建 User + OAuthIdentity，并返回 `{token, uuid}`。
-- Base：Authentik 不返回 email，系统使用本地占位邮箱，仍以 `provider + sub` 识别用户。
-- Bad：只按 email 匹配用户，会造成账号接管风险，禁止这样实现。
+- Good：公开别名 `bytcloudauth` 通过内部 Provider 完成登录，state 使用公开别名，系统仍以内部键 + `sub` 创建或命中 OAuthIdentity，并返回 `{token, uuid}`。
+- Base：内部 Provider 不返回 email，系统使用本地占位邮箱，仍以内部键 + `sub` 识别用户。
+- Bad：将公开别名写入 OAuthIdentity 或只按 email 匹配用户，会造成既有身份失配或账号接管风险，禁止这样实现。
 
 ### 6. Tests Required
 

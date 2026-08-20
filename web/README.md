@@ -25,13 +25,19 @@ VITE_API_BASE_URL=http://localhost:8080
 
 ## OAuth2 回调
 
-内部 provider key 为 `authentik`，用户界面只展示 BytCloud Auth。启用 provider 时，后端配置和 provider 注册的回调地址应使用：
+用户可见的 OAuth2 公开别名为 `bytcloudauth`，界面品牌为 BytCloud Auth。后端内部配置键和既有身份记录继续使用内部 Provider 键，不出现在浏览器 URL、前端请求或 state 中。启用 provider 时，后端配置和 Provider 注册的回调地址应使用：
 
 ```text
-http://localhost:5173/oauth2/authentik/callback
+http://localhost:5173/oauth2/bytcloudauth/callback
 ```
 
-前端只把当前回调中的 `code` 和 `state` 交给后端 callback API；authorization code、state、client secret、外部 access token 和 Astro JWT 不写入日志或页面。首次成功登录由后端创建本地用户和身份记录，前端不复制外部 Enrollment Flow。
+生产环境登记地址为：
+
+```text
+https://astro.bytcloud.org/oauth2/bytcloudauth/callback
+```
+
+前端只把当前回调中的 `code` 和 `state` 交给公开 callback API；authorization code、state、client secret、外部 access token 和 Astro JWT 不写入日志或页面。首次成功登录由后端创建本地用户和身份记录，前端不复制外部 Enrollment Flow。
 
 ## 目录边界
 

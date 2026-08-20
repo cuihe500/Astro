@@ -99,18 +99,18 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Description 获取 OAuth2/OIDC Provider 授权 URL
 // @Tags 用户
 // @Produce json
-// @Param provider path string true "Provider 名称" example(authentik)
+// @Param provider path string true "公开 Provider 别名" example(bytcloudauth)
 // @Success 200 {object} Response{data=OAuth2LoginResponse} "获取成功"
 // @Failure 400 {object} Response "Provider 不可用"
 // @Router /oauth2/{provider}/login [get]
 func (h *UserHandler) OAuth2Login(c *gin.Context) {
-	provider := c.Param("provider")
-	if provider == "" {
+	providerAlias := c.Param("provider")
+	if providerAlias == "" {
 		BadRequest(c, "Provider 不能为空")
 		return
 	}
 
-	authURL, err := h.oauth2Svc.BuildAuthURL(provider)
+	authURL, err := h.oauth2Svc.BuildAuthURL(providerAlias)
 	if err != nil {
 		HandleError(c, err)
 		return
@@ -123,7 +123,7 @@ func (h *UserHandler) OAuth2Login(c *gin.Context) {
 // @Description 使用授权码换取本系统 JWT
 // @Tags 用户
 // @Produce json
-// @Param provider path string true "Provider 名称" example(authentik)
+// @Param provider path string true "公开 Provider 别名" example(bytcloudauth)
 // @Param code query string true "授权码"
 // @Param state query string true "状态参数"
 // @Success 200 {object} Response{data=LoginResponse} "登录成功"
@@ -131,15 +131,15 @@ func (h *UserHandler) OAuth2Login(c *gin.Context) {
 // @Failure 401 {object} Response "认证失败"
 // @Router /oauth2/{provider}/callback [get]
 func (h *UserHandler) OAuth2Callback(c *gin.Context) {
-	provider := c.Param("provider")
+	providerAlias := c.Param("provider")
 	code := c.Query("code")
 	state := c.Query("state")
-	if provider == "" || code == "" || state == "" {
+	if providerAlias == "" || code == "" || state == "" {
 		BadRequest(c, "provider、code、state 不能为空")
 		return
 	}
 
-	token, user, err := h.oauth2Svc.Callback(c.Request.Context(), provider, code, state)
+	token, user, err := h.oauth2Svc.Callback(c.Request.Context(), providerAlias, code, state)
 	if err != nil {
 		HandleError(c, err)
 		return

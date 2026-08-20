@@ -31,7 +31,7 @@ oauth2:
       enabled: false
       client_id: ""
       client_secret: ""
-      redirect_url: "http://localhost:5173/oauth2/authentik/callback"
+      redirect_url: "http://localhost:5173/oauth2/bytcloudauth/callback"
       auth_url: "https://auth.example.com/application/o/authorize/"
       token_url: "https://auth.example.com/application/o/token/"
       userinfo_url: "https://auth.example.com/application/o/userinfo/"

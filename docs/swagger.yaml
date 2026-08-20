@@ -356,8 +356,8 @@ paths:
     get:
       description: 使用授权码换取本系统 JWT
       parameters:
-      - description: Provider 名称
-        example: authentik
+      - description: 公开 Provider 别名
+        example: bytcloudauth
         in: path
         name: provider
         required: true
@@ -399,8 +399,8 @@ paths:
     get:
       description: 获取 OAuth2/OIDC Provider 授权 URL
       parameters:
-      - description: Provider 名称
-        example: authentik
+      - description: 公开 Provider 别名
+        example: bytcloudauth
         in: path
         name: provider
         required: true

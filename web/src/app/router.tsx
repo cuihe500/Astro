@@ -1,7 +1,7 @@
-import { redirect, type LoaderFunctionArgs, createBrowserRouter } from "react-router-dom";
+import { replace, redirect, type LoaderFunctionArgs, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { getSessionToken, setSessionToken } from "../features/auth/session";
-import { completeBytCloudAuth, bytCloudErrorMessage, BYTCLOUD_PROVIDER_KEY } from "../features/auth/api";
+import { completeBytCloudAuth, bytCloudErrorMessage, BYTCLOUD_PROVIDER_ALIAS } from "../features/auth/api";
 import { AppsListPage } from "../features/apps/pages/AppsListPage";
 import { AppDetailPage } from "../features/apps/pages/AppDetailPage";
 import { CreateAppPage } from "../features/apps/pages/CreateAppPage";
@@ -24,6 +24,10 @@ function protectedLoader() {
 export async function oauthCallbackLoader({ params, request }: LoaderFunctionArgs): Promise<OAuthCallbackData | Response> {
   const provider = params.provider ?? "";
   const url = new URL(request.url);
+  if (provider !== BYTCLOUD_PROVIDER_ALIAS) {
+    return replace(`/oauth2/${BYTCLOUD_PROVIDER_ALIAS}/callback?error=invalid_provider`);
+  }
+
   const providerError = url.searchParams.get("error");
   if (providerError) {
     return {
@@ -33,7 +37,7 @@ export async function oauthCallbackLoader({ params, request }: LoaderFunctionArg
 
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  if (provider !== BYTCLOUD_PROVIDER_KEY || !code || !state) {
+  if (!code || !state) {
     return { error: "BytCloud Auth 回调信息不完整，请重新尝试。" };
   }
 

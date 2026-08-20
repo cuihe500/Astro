@@ -459,8 +459,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "example": "authentik",
-                        "description": "Provider 名称",
+                        "example": "bytcloudauth",
+                        "description": "公开 Provider 别名",
                         "name": "provider",
                         "in": "path",
                         "required": true
@@ -527,8 +527,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "example": "authentik",
-                        "description": "Provider 名称",
+                        "example": "bytcloudauth",
+                        "description": "公开 Provider 别名",
                         "name": "provider",
                         "in": "path",
                         "required": true
