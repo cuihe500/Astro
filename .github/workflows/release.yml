@@ -221,6 +221,7 @@ jobs:
             -o StrictHostKeyChecking=yes
             -o UserKnownHostsFile="$known_hosts_file"
           )
+          # shellcheck disable=SC2029
           ssh "${ssh_options[@]}" \
             "${ASTRO_DEPLOY_USER}@${ASTRO_DEPLOY_HOST}" \
             deploy test "$api_reference" "$web_reference"
@@ -290,6 +291,7 @@ jobs:
             -o StrictHostKeyChecking=yes
             -o UserKnownHostsFile="$known_hosts_file"
           )
+          # shellcheck disable=SC2029
           ssh "${ssh_options[@]}" \
             "${ASTRO_DEPLOY_USER}@${ASTRO_DEPLOY_HOST}" \
             deploy production "$api_reference" "$web_reference"
