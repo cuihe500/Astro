@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cuihe500/astro/internal/handler"
 	"github.com/cuihe500/astro/internal/k8s"
@@ -65,8 +66,9 @@ func main() {
 	// 设置运行模式
 	gin.SetMode(cfg.Server.Mode)
 
-	// 创建 Gin 引擎
-	r := gin.Default()
+	// 创建 Gin 引擎。访问日志只记录 Path，避免 OAuth2 code/state 等查询参数进入日志。
+	r := gin.New()
+	r.Use(gin.LoggerWithFormatter(formatRequestLog), gin.Recovery())
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
@@ -96,4 +98,15 @@ func main() {
 	if err := r.Run(addr); err != nil {
 		logger.Fatal("启动服务失败", zap.Error(err))
 	}
+}
+
+func formatRequestLog(params gin.LogFormatterParams) string {
+	return fmt.Sprintf("[GIN] %s | %3d | %13v | %15s | %-7s %s\n",
+		params.TimeStamp.Format(time.DateTime),
+		params.StatusCode,
+		params.Latency,
+		params.ClientIP,
+		params.Method,
+		params.Request.URL.Path,
+	)
 }

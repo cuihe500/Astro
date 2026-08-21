@@ -28,13 +28,13 @@ kubernetes:
 oauth2:
   providers:
     authentik:
-      enabled: false
-      client_id: ""
+      enabled: true
+      client_id: "astro-web"
       client_secret: ""
       redirect_url: "http://localhost:5173/oauth2/bytcloudauth/callback"
-      auth_url: "https://auth.example.com/application/o/authorize/"
-      token_url: "https://auth.example.com/application/o/token/"
-      userinfo_url: "https://auth.example.com/application/o/userinfo/"
+      auth_url: "https://auth.bytcloud.org/application/o/authorize/"
+      token_url: "https://auth.bytcloud.org/application/o/token/"
+      userinfo_url: "https://auth.bytcloud.org/application/o/userinfo/"
       scopes:
         - openid
         - email

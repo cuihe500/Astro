@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/viper"
 )
 
@@ -68,15 +70,24 @@ var GlobalConfig *Config
 
 // Load 加载配置文件
 func Load(path string) (*Config, error) {
-	viper.SetConfigFile(path)
+	configLoader := viper.New()
+	configLoader.SetConfigFile(path)
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := configLoader.ReadInConfig(); err != nil {
 		return nil, err
 	}
 
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := configLoader.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	runtimeEnvironment, err := applyEnvironment(&cfg)
+	if err != nil {
+		return nil, fmt.Errorf("加载运行时环境变量失败: %w", err)
+	}
+	if err := ValidateRuntime(&cfg, runtimeEnvironment); err != nil {
+		return nil, fmt.Errorf("运行时配置校验失败: %w", err)
 	}
 
 	GlobalConfig = &cfg
