@@ -94,23 +94,23 @@ jobs:
           ref: ${{ needs.verify.outputs.commit_sha }}
 
       - name: 登录 GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 配置 QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
 
       - name: 配置 Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: 生成 API 镜像元数据
         id: api_metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/cuihe500/astro-api
           tags: |
@@ -122,7 +122,7 @@ jobs:
 
       - name: 构建并推送 API 镜像
         id: api_build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -136,7 +136,7 @@ jobs:
 
       - name: 生成 Web 镜像元数据
         id: web_metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/cuihe500/astro-web
           tags: |
@@ -148,7 +148,7 @@ jobs:
 
       - name: 构建并推送 Web 镜像
         id: web_build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: web/Dockerfile
