@@ -25,10 +25,12 @@
 
 ## 验证
 
-- [~] `docker compose config --quiet` 已通过；真实 Docker health、loopback API `/health` 与 Web 响应等待后续镜像/运行时配置任务。
-- [~] 本机 SNI、JP/KR 入口和公网 HTTPS 已验证到预期测试 502/生产 503；确认没有直接公开 18080/18081；真实应用响应等待首个镜像。
+- [x] GitHub Run `32462154081` 的提交 SHA、API/Web digest、OCI revision 与主机 test state 一致；两镜像均为 ARM64，两容器 healthy 且仅绑定 `127.0.0.1:18080/18081`，生产没有容器或监听。
+- [x] loopback、本机 SNI、JP/KR 入口和公网测试域名的 Web `/`、SPA 深链、API `/health`、统一错误响应和 TLS 均通过；公网 OAuth2 登录 URL 使用测试 client 与严格测试回调。
+- [x] 经公网 API 完成临时账号注册/登录及单副本应用创建、列表、详情、running、日志、停止、启动、重启和删除；临时应用已删除，因无公开删除接口仅记录临时本地用户、OAuth 验证用户与空命名空间残留。
 - [x] 用合法格式但不可拉取 digest 验证入口安全失败；用非法环境/tag/额外参数验证拒绝；不得影响当前容器或数据库。
-- [~] 等待后续任务发布首个已知测试镜像后完成 deploy 与前一 state 回滚演练。
+- [x] 从 `jp-aws-entry` 外部链路提交浮动 tag，forced command 在部署前拒绝；前后 state、容器和公网健康不变。
+- [~] 首次成功 state 的 `previous` 为 `null`，未伪造前一 digest 或自动回滚结论；待下一次成功版本建立 `previous` 后再演练真实自动恢复。
 - [x] 验证生产入口配置存在且 production deploy 受 enabled/kubeconfig gate 拒绝。
 - [x] 更新 base-workspace README 记录所有验证及回滚步骤。
 

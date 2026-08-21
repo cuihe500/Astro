@@ -182,3 +182,11 @@ AND production kubeconfig/health preflight passed
 - 后端 API 路径、响应格式和前端请求接口保持不变。
 - OAuth2 生产回调保持现有 `astro.bytcloud.org` URL；测试新增独立回调，不改变生产 provider。
 - 如果 CI/CD 需要撤销，停用 workflow/部署 key 后不会影响已运行的主机 Compose 版本；基础设施回滚在 base-workspace 文档中独立执行。
+
+## 9. 首次测试发布批次
+
+首次真实发布初始目标为 `d465a2d2f08df2a9c1f1fb3d55cc643afb9694db`，首轮 CI 暴露 workflow 静态检查问题后，以最小修复提交 `17f6d72e1de0754cfc083f7a12d74e9dfc036de4` 完成部署。发布使用已有 `main push` 路径，commit SHA 即测试版本号。发布前只补齐 `test` Environment、forced-command 专用部署 key 和固定 host key；生产开关保持关闭，不为首次可见效果增加 tag、Release 或生产治理依赖。
+
+执行顺序为：配置受限连接 → 推送目标提交 → GitHub CI → 推送两个 ARM64 镜像 → 传递两个 digest → 测试 Compose 更新与健康检查 → 公网 Web/API/OAuth2 烟测 → 临时应用全生命周期验证。任一步失败先保留 Actions 与主机诊断证据；主机部署入口按已有 state 恢复上一成功 digest，禁止通过删除数据库或放宽 SSH 权限绕过失败。
+
+首个成功版本没有可供恢复的历史版本，因此本批次只验证失败输入不会破坏成功版本；自动恢复上一 digest 的真实演练延后到存在第二个可部署版本时进行。

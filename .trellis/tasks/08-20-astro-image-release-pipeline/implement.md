@@ -28,7 +28,8 @@
 - [x] 更新 README/web README 或新增应用发布说明，描述事件、GitHub Environment 名称、生产启用条件及不归属本仓库的基础设施边界。
 - [x] 运行 `make test`、`make lint`、`make build`、`make frontend-check`。
 - [x] 静态检查 workflow（actionlint）和 Dockerfile；检查 build context 与镜像层不含 host/control plane/secret。
-- [ ] 推送后从 GitHub Actions 验证 main、普通 tag、prerelease Release、正式 Release skip 行为。
+- [x] 推送后从 GitHub Actions 验证 main。
+- [ ] 推送后从 GitHub Actions 验证普通 tag、prerelease Release、正式 Release skip 行为。
 
 ## 本地验证记录（2026-08-21）
 
@@ -36,6 +37,15 @@
 - `make docker-build` 成功生成 ARM64 API/Web 镜像；OCI source/revision、healthcheck 和运行命令已 inspect。
 - API 入口已用主机测试 env 和只读 kubeconfig 烟测：业务命令 UID `10001`，复制后 kubeconfig 为 `0400`；缺少 runtime env 时拒绝启动。
 - Web 深链返回 SPA `index.html`，带模拟 OAuth2 `code/state` 的请求未在 Nginx 日志中出现 query；Gin formatter 单元测试同样通过。
+
+## main 推送验证记录（2026-08-21）
+
+- `d465a2d2f08df2a9c1f1fb3d55cc643afb9694db` 首次运行在 workflow 静态检查因 ShellCheck `SC2029` 停止；最小修复提交 `17f6d72e1de0754cfc083f7a12d74e9dfc036de4` 后，[Actions run 32462154081](https://github.com/cuihe500/Astro/actions/runs/32462154081) 成功。
+- `CI 校验`、`构建并推送 ARM64 镜像`、`部署测试环境` 均成功；main push 的生产部署 job 按条件跳过。
+- API：`ghcr.io/cuihe500/astro-api@sha256:a5561bf162cbd54df00dd56b123dc8b7cfa0a25de207c00219811e24d0c063b0`。
+- Web：`ghcr.io/cuihe500/astro-web@sha256:d6282eeb928289bb4e1b9b222823570b39da45432a193c313e70a0a47424f0ec`。
+- 主机 `state/test.json` 的 `current` 与上述引用一致，`deployed_at` 为 `2026-08-21T08:20:21Z`，首次成功部署的 `previous` 为 `null`。
+- 普通 tag、prerelease Release 与正式 Release 尚未验证。
 
 ## 回滚
 

@@ -64,13 +64,24 @@
 
 ## 4. 集成和验证
 
-- [ ] 在所有子任务完成后，用一个真实 main commit 完成：CI 检查 → ARM64镜像推送 → digest 测试部署 → API/Web health → `astro-test.bytcloud.org` 浏览器/OAuth2 烟测。
+- [x] 用一个真实 main commit 完成：CI 检查 → ARM64镜像推送 → digest 测试部署 → API/Web health → `astro-test.bytcloud.org` 浏览器/OAuth2 烟测。
 - [ ] 推一个非 Release tag，确认它只更新测试环境。
 - [ ] 创建 prerelease GitHub Release，确认它只更新测试环境。
 - [ ] 创建/模拟正式 GitHub Release，确认测试通过后 production job 因 `ASTRO_PRODUCTION_ENABLED=false` 明确 skipped，而非 workflow 失败。
 - [ ] 使测试部署健康检查失败一次，确认部署入口保留/恢复上一可用版本且数据库未被删除。
-- [ ] 检查 `git status`、镜像 metadata、base-workspace 文档、OpenResty配置、Docker 端口绑定、数据库网络、GHCR包可见性和 GitHub Actions日志。
-- [ ] 最终通过 `make test`、`make lint`、`make build`、`make frontend-check`，并按 base-workspace规则完成运行时验证。
+- [x] 检查 `git status`、镜像 metadata、base-workspace 文档、OpenResty配置、Docker 端口绑定、数据库网络、GHCR包可见性和 GitHub Actions日志。
+- [x] 最终通过 `make test`、`make lint`、`make build`、`make frontend-check`，并按 base-workspace规则完成运行时验证。
+
+### 4.1 首次测试发布：`d465a2d` → `17f6d72`
+
+- [x] 复核目标 SHA、远端差异和工作区；只推送已提交的 `main`，不携带本地未提交文件。
+- [x] 生成并安装 forced-command 专用部署 key；创建 GitHub `test` Environment，只录入固定 host/port/user、私钥和 host key，不上传应用运行时秘密。
+- [x] 保持 `ASTRO_PRODUCTION_ENABLED=false` 或缺失；不启动生产 Compose，不创建 tag/Release。
+- [x] 首轮 `d465a2d2f08df2a9c1f1fb3d55cc643afb9694db` 在 workflow 静态检查失败；最小修复后以 `17f6d72e1de0754cfc083f7a12d74e9dfc036de4` 完成 `CI 校验`、ARM64 镜像发布和测试部署，记录运行 URL、实际 SHA 与 API/Web digest。
+- [x] 验证测试 API/Web 容器健康、只监听 `127.0.0.1:18080/18081`，并验证本机 SNI、JP/KR 入口及公网 `https://astro-test.bytcloud.org`。
+- [x] 通过测试域名验证 Web、`/health`、OAuth2 登录入口和核心应用创建/查询/启动/停止/重启/日志/删除；清理临时应用并记录无法通过公开 API 清理的测试数据。
+- [x] 对成功版本提交非法环境/tag/digest 请求，确认受限入口拒绝且现有服务、state 和数据库不受影响；第二个有效版本出现前不伪造“上一 digest 自动恢复”结论。
+- [x] 将真实结果同步到对应子任务清单和 `/root/base-workspace/applications/astro/README.md`，不得记录 secret 正文。
 
 ## 验证命令
 
@@ -107,7 +118,7 @@ systemctl is-active openresty
 
 ## 任务启动前复核
 
-- [ ] 父 PRD、design 和 implement 已无未决问题。
-- [ ] 三个子任务均已拥有独立 PRD、design、implement 和 JSONL context。
-- [ ] 第 1 子任务作为下一个执行目标；第 2 子任务在其部署契约明确后执行；第 3 子任务可并行配置但不得提前启用生产。
-- [ ] 用户已审阅本实施清单并在后续消息中明确批准开始实施。
+- [x] 父 PRD、design 和 implement 已无未决问题。
+- [x] 三个子任务均已拥有独立 PRD、design、implement 和 JSONL context。
+- [x] 第 1 子任务作为下一个执行目标；第 2 子任务在其部署契约明确后执行；第 3 子任务可并行配置但不得提前启用生产。
+- [x] 用户已审阅本实施清单并在后续消息中明确批准开始实施。
