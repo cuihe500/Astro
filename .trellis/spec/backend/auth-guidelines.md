@@ -26,7 +26,7 @@
 
 #### 前端回调
 
-- 用户可见的认证品牌为 `BytCloud Auth`；`bytcloudauth` 是浏览器 URL、前端请求和 OAuth2 state 使用的公开别名。
+- 认证服务正式名为 `BytCloud Auth`；登录按钮使用 `BytCloud`，`bytcloudauth` 是浏览器 URL、前端请求和 OAuth2 state 使用的公开别名。
 - 内部 Provider 键只用于后端配置和 `OAuthIdentity.Provider`，不得出现在浏览器 URL、前端构建产物、公开 API 文档、state 或客户端错误。
 - 本地开发前端回调地址为 `http://localhost:5173/oauth2/bytcloudauth/callback`；生产登记地址为 `https://astro.bytcloud.org/oauth2/bytcloudauth/callback`。后端 `redirect_url`、Provider 注册地址和 code exchange 使用的地址必须完全一致。
 - 前端 callback loader 只把当前 URL 中的一次性 `code`、`state` 交给公开 callback API，成功后保存后端签发的 JWT；不保存 authorization code 或 state。
@@ -45,18 +45,20 @@
 oauth2:
   providers:
     authentik:
-      enabled: false
-      client_id: ""
+      enabled: true
+      client_id: "astro-web"
       client_secret: ""
       redirect_url: "http://localhost:5173/oauth2/bytcloudauth/callback"
-      auth_url: "https://auth.example.com/application/o/authorize/"
-      token_url: "https://auth.example.com/application/o/token/"
-      userinfo_url: "https://auth.example.com/application/o/userinfo/"
+      auth_url: "https://auth.bytcloud.org/application/o/authorize/"
+      token_url: "https://auth.bytcloud.org/application/o/token/"
+      userinfo_url: "https://auth.bytcloud.org/application/o/userinfo/"
       scopes:
         - openid
         - email
         - profile
 ```
+
+- 环境服务以其 root-only `EnvironmentFile` 注入 `ASTRO_OAUTH2_AUTHENTIK_CLIENT_ID`、`ASTRO_OAUTH2_AUTHENTIK_CLIENT_SECRET` 与 `ASTRO_OAUTH2_AUTHENTIK_REDIRECT_URL`：测试为 `/root/.secrets/astro/test/oauth.env`（`astro-test-web` / `https://astro-test.bytcloud.org/oauth2/bytcloudauth/callback`），生产为 `/root/.secrets/astro/production/oauth.env`（`astro-web` / `https://astro.bytcloud.org/oauth2/bytcloudauth/callback`）。秘密不得写入仓库或日志。
 
 #### DB
 
