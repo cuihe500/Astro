@@ -62,7 +62,7 @@ export function LoginPage() {
       <div className="primary-auth-action">
         <button className="button button-auth" type="button" onClick={startBytCloudAuth} disabled={startingAuth}>
           <KeyRound size={19} aria-hidden="true" />
-          {startingAuth ? "正在前往 BytCloud Auth" : "使用 BytCloud Auth 继续"}
+          {startingAuth ? "正在前往 BytCloud 登录" : "使用 BytCloud 登录"}
           <ArrowRight size={18} aria-hidden="true" />
         </button>
         <p>已有用户可直接登录，首次使用将自动创建 Astro 账号。</p>

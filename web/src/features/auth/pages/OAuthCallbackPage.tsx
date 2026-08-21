@@ -10,7 +10,7 @@ export function OAuthCallbackPage() {
   const { error } = useLoaderData() as OAuthCallbackData;
 
   return (
-    <AuthLayout title="BytCloud Auth 未完成" subtitle="你仍可使用账号密码登录">
+    <AuthLayout title="BytCloud 登录未完成" subtitle="你仍可使用账号密码登录">
       <div className="callback-error" role="alert">
         <CircleAlert aria-hidden="true" />
         <p>{error}</p>
