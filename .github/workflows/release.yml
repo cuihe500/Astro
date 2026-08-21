@@ -1,0 +1,295 @@
+name: 发布校验与部署
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - "**"
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: CI 校验
+    runs-on: ubuntu-24.04
+    outputs:
+      commit_sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - name: 检出目标提交
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+          fetch-depth: 1
+
+      - name: 固定提交 SHA
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit_sha="$(git rev-parse HEAD)"
+          if [[ ! "$commit_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            printf '%s\n' '无法解析目标提交 SHA' >&2
+            exit 1
+          fi
+          printf 'sha=%s\n' "$commit_sha" >> "$GITHUB_OUTPUT"
+
+      - name: 配置 Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 安装 golangci-lint
+        shell: bash
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+
+      - name: 后端测试
+        run: make test
+
+      - name: 后端静态检查
+        run: make lint
+
+      - name: 后端构建
+        run: make build
+
+      - name: 安装前端依赖
+        run: make frontend-ci
+
+      - name: 前端检查
+        run: make frontend-check
+
+      - name: 工作流静态检查
+        run: make workflow-lint
+
+  publish:
+    name: 构建并推送 ARM64 镜像
+    needs: verify
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api_digest: ${{ steps.api_build.outputs.digest }}
+      web_digest: ${{ steps.web_build.outputs.digest }}
+    steps:
+      - name: 检出已校验提交
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.verify.outputs.commit_sha }}
+
+      - name: 登录 GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: 配置 Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 生成 API 镜像元数据
+        id: api_metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/cuihe500/astro-api
+          tags: |
+            type=raw,value=${{ needs.verify.outputs.commit_sha }}
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/cuihe500/astro
+            org.opencontainers.image.revision=${{ needs.verify.outputs.commit_sha }}
+
+      - name: 构建并推送 API 镜像
+        id: api_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.api_metadata.outputs.tags }}
+          labels: ${{ steps.api_metadata.outputs.labels }}
+          build-args: VCS_REF=${{ needs.verify.outputs.commit_sha }}
+          cache-from: type=gha,scope=astro-api
+          cache-to: type=gha,mode=max,scope=astro-api
+
+      - name: 生成 Web 镜像元数据
+        id: web_metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/cuihe500/astro-web
+          tags: |
+            type=raw,value=${{ needs.verify.outputs.commit_sha }}
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/cuihe500/astro
+            org.opencontainers.image.revision=${{ needs.verify.outputs.commit_sha }}
+
+      - name: 构建并推送 Web 镜像
+        id: web_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.web_metadata.outputs.tags }}
+          labels: ${{ steps.web_metadata.outputs.labels }}
+          build-args: VCS_REF=${{ needs.verify.outputs.commit_sha }}
+          cache-from: type=gha,scope=astro-web
+          cache-to: type=gha,mode=max,scope=astro-web
+
+  deploy_test:
+    name: 部署测试环境
+    needs:
+      - verify
+      - publish
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    environment:
+      name: test
+      url: https://astro-test.bytcloud.org
+    concurrency:
+      group: astro-test-deployment
+      cancel-in-progress: true
+    steps:
+      - name: 调用受限测试部署入口
+        shell: bash
+        env:
+          ASTRO_DEPLOY_HOST: ${{ vars.ASTRO_DEPLOY_HOST }}
+          ASTRO_DEPLOY_PORT: ${{ vars.ASTRO_DEPLOY_PORT }}
+          ASTRO_DEPLOY_USER: ${{ vars.ASTRO_DEPLOY_USER }}
+          ASTRO_DEPLOY_SSH_KEY: ${{ secrets.ASTRO_DEPLOY_SSH_KEY }}
+          ASTRO_DEPLOY_KNOWN_HOSTS: ${{ secrets.ASTRO_DEPLOY_KNOWN_HOSTS }}
+          ASTRO_API_DIGEST: ${{ needs.publish.outputs.api_digest }}
+          ASTRO_WEB_DIGEST: ${{ needs.publish.outputs.web_digest }}
+        run: |
+          set -euo pipefail
+          : "${ASTRO_DEPLOY_HOST:?缺少 ASTRO_DEPLOY_HOST}"
+          : "${ASTRO_DEPLOY_PORT:?缺少 ASTRO_DEPLOY_PORT}"
+          : "${ASTRO_DEPLOY_USER:?缺少 ASTRO_DEPLOY_USER}"
+          : "${ASTRO_DEPLOY_SSH_KEY:?缺少 ASTRO_DEPLOY_SSH_KEY}"
+          : "${ASTRO_DEPLOY_KNOWN_HOSTS:?缺少 ASTRO_DEPLOY_KNOWN_HOSTS}"
+          [[ "$ASTRO_DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || exit 1
+          [[ "$ASTRO_DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] || exit 1
+          (( 10#$ASTRO_DEPLOY_PORT >= 1 && 10#$ASTRO_DEPLOY_PORT <= 65535 )) || exit 1
+          [[ "$ASTRO_DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || exit 1
+          [[ "$ASTRO_API_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+          [[ "$ASTRO_WEB_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+
+          key_file="${RUNNER_TEMP}/astro-deploy-key"
+          known_hosts_file="${RUNNER_TEMP}/astro-known-hosts"
+          cleanup() {
+            rm -f "$key_file" "$known_hosts_file"
+          }
+          trap cleanup EXIT
+          umask 077
+          printf '%s\n' "$ASTRO_DEPLOY_SSH_KEY" > "$key_file"
+          printf '%s\n' "$ASTRO_DEPLOY_KNOWN_HOSTS" > "$known_hosts_file"
+
+          api_reference="ghcr.io/cuihe500/astro-api@${ASTRO_API_DIGEST}"
+          web_reference="ghcr.io/cuihe500/astro-web@${ASTRO_WEB_DIGEST}"
+          ssh_options=(
+            -i "$key_file"
+            -p "$ASTRO_DEPLOY_PORT"
+            -o BatchMode=yes
+            -o ConnectTimeout=15
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$known_hosts_file"
+          )
+          ssh "${ssh_options[@]}" \
+            "${ASTRO_DEPLOY_USER}@${ASTRO_DEPLOY_HOST}" \
+            deploy test "$api_reference" "$web_reference"
+
+  deploy_production:
+    name: 部署生产环境（未启用时跳过）
+    needs:
+      - verify
+      - publish
+      - deploy_test
+    if: >-
+      github.event_name == 'release' &&
+      github.event.release.prerelease == false &&
+      vars.ASTRO_PRODUCTION_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://astro.bytcloud.org
+    concurrency:
+      group: astro-production-deployment
+      cancel-in-progress: false
+    steps:
+      - name: 调用受限生产部署入口
+        shell: bash
+        env:
+          ASTRO_DEPLOY_HOST: ${{ vars.ASTRO_DEPLOY_HOST }}
+          ASTRO_DEPLOY_PORT: ${{ vars.ASTRO_DEPLOY_PORT }}
+          ASTRO_DEPLOY_USER: ${{ vars.ASTRO_DEPLOY_USER }}
+          ASTRO_DEPLOY_SSH_KEY: ${{ secrets.ASTRO_DEPLOY_SSH_KEY }}
+          ASTRO_DEPLOY_KNOWN_HOSTS: ${{ secrets.ASTRO_DEPLOY_KNOWN_HOSTS }}
+          ASTRO_API_DIGEST: ${{ needs.publish.outputs.api_digest }}
+          ASTRO_WEB_DIGEST: ${{ needs.publish.outputs.web_digest }}
+        run: |
+          set -euo pipefail
+          : "${ASTRO_DEPLOY_HOST:?缺少 ASTRO_DEPLOY_HOST}"
+          : "${ASTRO_DEPLOY_PORT:?缺少 ASTRO_DEPLOY_PORT}"
+          : "${ASTRO_DEPLOY_USER:?缺少 ASTRO_DEPLOY_USER}"
+          : "${ASTRO_DEPLOY_SSH_KEY:?缺少 ASTRO_DEPLOY_SSH_KEY}"
+          : "${ASTRO_DEPLOY_KNOWN_HOSTS:?缺少 ASTRO_DEPLOY_KNOWN_HOSTS}"
+          [[ "$ASTRO_DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || exit 1
+          [[ "$ASTRO_DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] || exit 1
+          (( 10#$ASTRO_DEPLOY_PORT >= 1 && 10#$ASTRO_DEPLOY_PORT <= 65535 )) || exit 1
+          [[ "$ASTRO_DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || exit 1
+          [[ "$ASTRO_API_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+          [[ "$ASTRO_WEB_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+
+          key_file="${RUNNER_TEMP}/astro-deploy-key"
+          known_hosts_file="${RUNNER_TEMP}/astro-known-hosts"
+          cleanup() {
+            rm -f "$key_file" "$known_hosts_file"
+          }
+          trap cleanup EXIT
+          umask 077
+          printf '%s\n' "$ASTRO_DEPLOY_SSH_KEY" > "$key_file"
+          printf '%s\n' "$ASTRO_DEPLOY_KNOWN_HOSTS" > "$known_hosts_file"
+
+          api_reference="ghcr.io/cuihe500/astro-api@${ASTRO_API_DIGEST}"
+          web_reference="ghcr.io/cuihe500/astro-web@${ASTRO_WEB_DIGEST}"
+          ssh_options=(
+            -i "$key_file"
+            -p "$ASTRO_DEPLOY_PORT"
+            -o BatchMode=yes
+            -o ConnectTimeout=15
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$known_hosts_file"
+          )
+          ssh "${ssh_options[@]}" \
+            "${ASTRO_DEPLOY_USER}@${ASTRO_DEPLOY_HOST}" \
+            deploy production "$api_reference" "$web_reference"
