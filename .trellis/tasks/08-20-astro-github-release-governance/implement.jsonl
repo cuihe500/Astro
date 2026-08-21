@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "后端规范索引与项目约束"}
+{"file": ".trellis/spec/backend/auth-guidelines.md", "reason": "OAuth2/JWT/运行时秘密契约"}
+{"file": ".trellis/spec/backend/deployment-guidelines.md", "reason": "GitHub 环境、host key 与部署权限契约"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "质量门禁与 Makefile 验证"}
+{"file": ".trellis/tasks/08-20-cicd-test-production-deploy/research/cicd-infrastructure.md", "reason": "已验证的主机、GitHub 与 CI/CD事实"}

@@ -1,0 +1,30 @@
+{
+  "id": "cicd-test-production-deploy",
+  "name": "cicd-test-production-deploy",
+  "title": "规划 CI/CD 测试与生产部署",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cuihe500",
+  "assignee": "cuihe500",
+  "createdAt": "2026-08-20",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-20-astro-host-control-plane",
+    "08-20-astro-image-release-pipeline",
+    "08-20-astro-github-release-governance"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

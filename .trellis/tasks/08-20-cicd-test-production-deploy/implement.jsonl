@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "后端规范索引，约束运行时配置改造与验证"}
+{"file": ".trellis/spec/backend/auth-guidelines.md", "reason": "OAuth2、JWT 与运行时秘密约束"}
+{"file": ".trellis/spec/backend/deployment-guidelines.md", "reason": "跨子任务的发布部署契约"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Makefile 校验与质量门禁"}
+{"file": ".trellis/tasks/08-20-cicd-test-production-deploy/research/cicd-infrastructure.md", "reason": "CI/CD、主机设施与 GitHub 事件研究结论"}

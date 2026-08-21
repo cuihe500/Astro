@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "后端规范索引，用于最终集成检查"}
+{"file": ".trellis/spec/backend/auth-guidelines.md", "reason": "检查 OAuth2/JWT/秘密部署边界"}
+{"file": ".trellis/spec/backend/deployment-guidelines.md", "reason": "检查跨子任务发布部署契约"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "检查 Makefile 验证和禁止模式"}
+{"file": ".trellis/tasks/08-20-cicd-test-production-deploy/research/cicd-infrastructure.md", "reason": "检查基础设施与发布策略符合已研究约束"}
