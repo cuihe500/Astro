@@ -53,7 +53,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="注册备用账号" subtitle="BytCloud Auth 不可用时仍可登录">
+    <AuthLayout title="注册本地账号" subtitle="BytCloud Auth 不可用时仍可登录">
       <form className="form-stack" onSubmit={submitRegistration} noValidate>
         <div className="field">
           <label htmlFor="register-username">用户名</label>

@@ -36,7 +36,7 @@ export function register(username: string, password: string, email: string): Pro
 export async function getBytCloudAuthUrl(): Promise<string> {
   const data = await request<AuthUrlResponse>(`/oauth2/${BYTCLOUD_PROVIDER_ALIAS}/login`);
   if (!data || typeof data.auth_url !== "string") {
-    throw new ApiError(-1, "BytCloud Auth 暂时不可用，请使用账号密码登录。");
+    throw new ApiError(-1, "BytCloud Auth 暂时不可用，请使用本地账号密码登录。");
   }
 
   try {
@@ -46,7 +46,7 @@ export async function getBytCloudAuthUrl(): Promise<string> {
     }
     return url.toString();
   } catch {
-    throw new ApiError(-1, "BytCloud Auth 返回了无效地址，请使用账号密码登录。");
+    throw new ApiError(-1, "BytCloud Auth 返回了无效地址，请使用本地账号密码登录。");
   }
 }
 

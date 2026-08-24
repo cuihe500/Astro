@@ -73,7 +73,7 @@ export function LoginPage() {
         ) : null}
       </div>
 
-      <div className="auth-divider"><span>账号密码备用登录</span></div>
+      <div className="auth-divider"><span>本地账号密码登录</span></div>
 
       {searchParams.get("registered") === "1" ? (
         <div className="feedback feedback-success" role="status">
@@ -124,11 +124,11 @@ export function LoginPage() {
         </div>
         {formError ? <div className="feedback feedback-error" role="alert">{formError}</div> : null}
         <button className="button button-secondary button-block" type="submit" disabled={submitting}>
-          {submitting ? "正在登录" : "账号密码登录"}
+          {submitting ? "正在登录" : "本地账号密码登录"}
         </button>
       </form>
 
-      <p className="auth-footer">没有本地账号？<Link to="/register">注册备用账号</Link></p>
+      <p className="auth-footer">没有本地账号？<Link to="/register">注册本地账号</Link></p>
     </AuthLayout>
   );
 }

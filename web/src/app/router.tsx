@@ -31,7 +31,7 @@ export async function oauthCallbackLoader({ params, request }: LoaderFunctionArg
   const providerError = url.searchParams.get("error");
   if (providerError) {
     return {
-      error: "BytCloud Auth 未完成登录，请返回后使用账号密码登录。",
+      error: "BytCloud Auth 未完成登录，请返回后使用本地账号密码登录。",
     };
   }
 
