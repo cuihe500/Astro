@@ -16,3 +16,28 @@
 1. 先核验检查点 manifest，再修改任何主机控制面文件。
 2. 后续 `astro-image-release-pipeline` 发布首个有效 ARM64 GHCR digest 后，执行首次测试部署、成功 state 写入及故障 digest 自动回滚演练。
 3. 不要把主机 Compose、OpenResty、部署脚本、状态、kubeconfig 或秘密写入 Astro Git 仓库。
+
+
+## Session 2: 建立 GitHub 与 Trellis 工作治理流程
+
+**Date**: 2026-08-24
+**Task**: 建立 GitHub 与 Trellis 工作治理流程
+**Branch**: `main`
+
+### Summary
+
+创建 Astro Development Project #6 与 Issue #1，加入 Issue/PR 模板、AI/Trellis 门禁、权威流程文档和 Make 入口；PR #2 已通过 CI、评审并合并，Issue 已关闭且 Project 已进入 Done。GitHub UI 尚需将工作流看板按 Status 分组并启用仓库级 Auto-add。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `420d6e3` | (see git log) |
+| `2c4a0d1` | (see git log) |
+| `fddc315` | (see git log) |
+| `a2b6c10` | (see git log) |
+| `e9c5fb7` | (see git log) |
+
+### Status
+
+[OK] **Completed**
