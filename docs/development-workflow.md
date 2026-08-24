@@ -83,7 +83,7 @@ make trellis TRELLIS_ARGS='start <任务目录>'
 
 1. 按 Trellis 规划实施，只使用 Makefile 已提供的命令。
 2. 执行与变更匹配的校验；治理文件可运行 `make governance-check TASK=<任务目录>`。
-3. 创建 PR 前将 Project Status 改为 `In Review`。
+3. 创建 PR；GitHub 内建关联自动化执行后，再将 Project Status 改为 `In Review`，避免状态被重置。
 4. PR 必须填写 Issue 和 Trellis 路径。完整交付使用 `Fixes #<编号>`，部分交付使用 `Refs #<编号>`；部分交付不得关闭 Issue 或归档 Trellis 任务。
 
 ### 4. 完成或取消
