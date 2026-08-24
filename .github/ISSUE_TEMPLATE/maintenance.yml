@@ -1,0 +1,41 @@
+name: 维护任务
+description: 提交重构、文档、依赖、运维等维护工作
+title: "[Maintenance] "
+projects: ["cuihe500/6"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目标与价值
+      description: 为什么现在需要这项维护？
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 工作范围
+      description: 本次做什么、不做什么？
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      placeholder: |
+        - [ ] ……
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: 风险与影响
+      description: 说明兼容性、部署或数据风险；没有请填写“无”。
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 提交确认
+      options:
+        - label: 我确认内容不包含密码、Token、密钥或未公开漏洞信息。
+          required: true

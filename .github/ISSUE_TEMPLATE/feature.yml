@@ -1,0 +1,69 @@
+name: 功能需求
+description: 提交可独立验收的新功能或体验改进
+title: "[Feature] "
+projects: ["cuihe500/6"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请描述用户问题和验收结果，不要只描述实现方案。安全漏洞请改用 Security Advisory。
+  - type: textarea
+    id: user_value
+    attributes:
+      label: 用户价值
+      description: 谁遇到了什么问题，解决后有什么价值？
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 功能范围
+      description: 本次必须交付什么？
+    validations:
+      required: true
+  - type: textarea
+    id: non_scope
+    attributes:
+      label: 非功能范围
+      description: 本次明确不做什么？没有请填写“无”。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 使用可验证的清单描述完成条件。
+      placeholder: |
+        - [ ] 给定……当……则……
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 依赖与阻塞
+      description: 列出依赖、前置决策或外部阻塞；没有请填写“无”。
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: 影响面
+      multiple: true
+      options:
+        - 后端 API
+        - Web 界面
+        - 数据库
+        - Kubernetes 资源
+        - 认证与权限
+        - 配置或部署
+        - 文档或开发流程
+        - 尚不确定
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 提交确认
+      options:
+        - label: 我确认内容不包含密码、Token、密钥或未公开漏洞信息。
+          required: true

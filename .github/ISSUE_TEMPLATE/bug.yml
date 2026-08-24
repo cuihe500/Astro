@@ -1,0 +1,66 @@
+name: 缺陷报告
+description: 报告可复现且需要修复的问题
+title: "[Bug] "
+projects: ["cuihe500/6"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        未公开安全漏洞不得提交公开 Issue，请使用 Security Advisory。
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影响
+      description: 哪些用户或功能受到影响？严重程度如何？
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. ……
+        2. ……
+        3. ……
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      description: 包括版本、部署环境、浏览器或 Kubernetes 版本等相关信息。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 日志与证据
+      description: 提供已脱敏的日志、截图或错误信息；没有请填写“无”。
+    validations:
+      required: true
+  - type: textarea
+    id: regression_acceptance
+    attributes:
+      label: 回归验收标准
+      description: 修复后如何确认问题不再发生且相关功能未受影响？
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 提交确认
+      options:
+        - label: 我确认该问题不包含未公开安全漏洞或敏感信息。
+          required: true
