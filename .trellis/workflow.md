@@ -68,7 +68,7 @@ make trellis TRELLIS_ARGS='add-subtask <parent> <child>'
 make trellis TRELLIS_ARGS='remove-subtask <parent> <child>'
 
 # PR creation
-make trellis TRELLIS_ARGS='create-pr [name] [--dry-run]'
+make github GITHUB_ARGS='pr create --base <base> --head <branch> --title "<title>" --body-file <file>'
 ```
 
 > Run `make trellis TRELLIS_ARGS='--help'` to see the authoritative, up-to-date list. Direct calls to `gh` or `.trellis/scripts/*.py` are forbidden by the project rules; use the `github` and `trellis*` Make targets.
