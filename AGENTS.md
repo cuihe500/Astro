@@ -147,3 +147,16 @@ Astro 是一个面向 C 端用户的容器即服务 (CaaS) 平台，提供简单
 20. **统一日志**: 禁止使用标准库 `log`，必须使用 `pkg/logger` 包
 21. **结构化日志**: 使用 `zap.Field` 记录上下文信息，避免字符串拼接
 22. **日志级别**: Debug 用于调试、Info 用于常规、Warn 用于异常、Error 用于错误、Fatal 用于致命错误
+
+## GitHub 与 Trellis 工作治理
+
+23. **权威流程**: 必须遵循 `docs/development-workflow.md`；纯问答和只读调查可不建工作项，一旦实施代码、文档、配置或流程变更则不可跳过
+24. **先建工作项**: Feature、Bug、Maintenance 必须先使用对应 GitHub Issue Form，并加入唯一的 [Astro Development](https://github.com/users/cuihe500/projects/6) Project，达到 `Ready` 后才可创建 Trellis 任务
+25. **唯一映射**: 一个可独立验收的 Trellis 任务只能对应一个 GitHub Issue 和一个 Project 条目；实现步骤留在 `implement.md`，不得滥建子任务
+26. **任务关联**: 创建 Trellis 任务时必须同时写入 `meta.github_issue` 和 `meta.github_project`；禁止使用空值、编号猜测或事后补录
+27. **开始门禁**: `task.py start` 前必须确认 Work Type、Priority、Assignee、Status、Start date、Trellis Task 完整，Project Status 已改为 `In Progress`，且用户已批准规划
+28. **权限失败即停止**: 无 GitHub 权限、无法验证 Issue/Project 或关联不一致时，只报告缺失项并等待处理，禁止先实施后补录
+29. **交付关联**: PR 必须关联 Issue 和 Trellis 路径；完整交付使用 `Fixes #<编号>`，部分交付使用 `Refs #<编号>`，并将 Project Status 更新为 `In Review`
+30. **完成定义**: PR 合并且验收通过后才能关闭 Issue、将 Project 改为 `Done` 并归档 Trellis；`task.py finish` 仅清除会话指针，不代表完成
+31. **例外处理**: 紧急修复只能由用户明确授权，且最迟在 PR 审查或合并前补齐关联；安全漏洞必须使用 Security Advisory 或受限私有工作项，不得公开敏感信息
+32. **命令入口**: 日常 GitHub 与 Trellis 操作分别使用 Makefile 的 `github` 和 `trellis` 等目标，禁止直接调用 `gh` 或 `.trellis/scripts/*.py`；一次性 Project 初始化可在明确授权下例外执行
