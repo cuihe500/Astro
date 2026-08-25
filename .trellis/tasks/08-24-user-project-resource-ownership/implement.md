@@ -29,16 +29,22 @@
 - [x] 增加最小 Project 类型/API，以及项目列表和创建页面；列表提供进入项目与删除空项目操作。
 - [x] 将应用 API 与三个页面改为携带 `projectId`，路由迁至 `/projects/:projectId/apps...`。
 - [x] 将登录后入口、品牌链接和导航改为 `/projects`；无项目时展示创建项目引导。
-- [x] 复用现有 Feedback、原生 dialog、Lucide 和 CSS token，补齐加载/错误/确认、键盘可达与移动端布局测试，不添加依赖。
+- [x] 复用现有 Feedback、原生 dialog、Lucide 和 CSS token，补齐加载/错误/确认、键盘可达与移动端布局测试，不添加运行时依赖；页面测试仅增加 `jsdom` 开发依赖。
 
 ### 4. 同步文档并验证破坏性切换
 
 - [x] 更新 `docs/architecture-design.md` 的数据模型、Namespace 架构、API 和 Web 流程；运行 `make swagger` 更新生成文档。
 - [x] 更新受本次实现影响的 `.trellis/spec/backend/` 真实约定。
-- [ ] 通过 Makefile 入口只读盘点测试数据库旧 App 与带 `managed-by=astro` 标签的旧 `astro-user-*` Namespace，向用户展示精确清单并再次取得删除确认。
-- [ ] 先经现有应用删除流程逐项清理获批的测试 App，再定点删除清单中的空旧 Namespace；在测试环境部署后验证 schema gate 已重建 `apps` 表、没有孤儿 App，且每个 Project Namespace 与记录一致。
+- [x] 通过 Makefile 入口只读盘点测试数据库旧 App 与带 `managed-by=astro` 标签的旧 `astro-user-*` Namespace，向用户展示精确清单并再次取得删除确认。
+- [x] 先经现有应用删除流程逐项清理获批的测试 App，再定点删除清单中的空旧 Namespace；在测试环境部署后验证 schema gate 已重建 `apps` 表、没有孤儿 App，且每个 Project Namespace 与记录一致。
 
-当前阻塞：`make legacy-inventory` 已实现并确认会在缺少依赖时失败关闭；当前环境缺少 `mariadb/mysql` 客户端，因此尚未连接测试数据库或 Kubernetes 获取清单，也未执行任何删除。
+盘点入口改为精确按 `ASTRO_DATABASE_PORT` 的宿主端口映射唯一定位运行中的 Docker 数据库容器，并在容器内复用现有 MariaDB 客户端和环境；本机无需安装数据库客户端。Kubernetes 优先使用显式 kubeconfig 或 kubectl 默认配置；二者均未提供有效 context 时，仅在本机恰好存在一个 kind 集群时直接读取其 kubeconfig，且始终只接受 `kind-*` context。每个旧 Namespace 还会列出 Deployment、Service 与 Pod 并标记空或非空。盘点不落临时配置、保持只读且不会执行清理。
+
+2026-08-25 已在专用测试数据库与本机 kind 集群完成只读盘点：未检测到旧 `apps` schema；清单中的旧 Namespace 不含 Deployment、Service 或 Pod。
+
+用户确认后已通过受限 Makefile 入口删除该空 Namespace，命令等待删除完成并通过只读查询确认其不存在。数据库无旧 `apps` schema，因此未执行任何数据库删除。容器名、端口与 context 等具体测试环境信息仅写入 Git 已忽略的本机配置，不进入仓库。
+
+随后在同一本机专用测试环境启动当前后端完成端到端烟测：验证当前 schema、非空项目外键和无孤儿 App；验证用户内项目重名被拒绝、不同用户可创建同名项目、跨用户读取被拒绝；验证应用及 Deployment/Service 创建、启停、重启、删除，非空项目拒绝删除，旧扁平 API 不存在；最后删除烟测项目并确认其 Namespace 消失。
 
 ## 验证命令
 
@@ -46,6 +52,7 @@
 
 ```bash
 make test
+make test-integration # 仅对显式提供的空临时 MariaDB 执行
 make lint
 make build
 make frontend-check

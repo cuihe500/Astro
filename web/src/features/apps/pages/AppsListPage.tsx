@@ -1,5 +1,5 @@
 import { ArrowLeft, Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { EmptyState, ErrorState } from "../../../components/Feedback";
 import { errorMessage } from "../../../lib/api";
@@ -23,20 +23,24 @@ export function AppsListPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requestSequence = useRef(0);
 
   const loadApps = useCallback(async () => {
+    const request = ++requestSequence.current;
     setLoading(true);
     setError("");
     setProject(null);
     setApps([]);
     try {
       const [nextProject, nextApps] = await Promise.all([getProject(projectId), getApps(projectId)]);
+      if (request !== requestSequence.current) return;
       setProject(nextProject);
       setApps(nextApps);
     } catch (requestError) {
+      if (request !== requestSequence.current) return;
       setError(errorMessage(requestError, "应用列表加载失败。"));
     } finally {
-      setLoading(false);
+      if (request === requestSequence.current) setLoading(false);
     }
   }, [projectId]);
 
@@ -44,6 +48,7 @@ export function AppsListPage() {
     // 首次进入页面时同步远端数据，状态更新来自请求结果。
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadApps();
+    return () => { requestSequence.current += 1; };
   }, [loadApps]);
 
   return (

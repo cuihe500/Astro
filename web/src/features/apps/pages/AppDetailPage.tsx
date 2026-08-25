@@ -1,5 +1,5 @@
 import { ArrowLeft, CircleCheck, Play, RefreshCw, RotateCcw, Square, Trash2 } from "lucide-react";
-import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/Feedback";
 import { errorMessage } from "../../../lib/api";
@@ -21,6 +21,7 @@ const ACTION_LABELS: Record<LifecycleAction, string> = {
 
 export function AppDetailPage() {
   const { projectId = "", id = "" } = useParams();
+  const routeKey = `${projectId}/${id}`;
   const navigate = useNavigate();
   const location = useLocation();
   const deleteDialog = useRef<HTMLDialogElement>(null);
@@ -30,33 +31,53 @@ export function AppDetailPage() {
   const [logs, setLogs] = useState("");
   const [logsLoading, setLogsLoading] = useState(true);
   const [logsError, setLogsError] = useState("");
-  const [pendingAction, setPendingAction] = useState<LifecycleAction | "delete" | null>(null);
-  const [feedback, setFeedback] = useState<{ message: string; error: boolean } | null>(() => {
+  const [pendingRequest, setPendingRequest] = useState<{ routeKey: string; action: LifecycleAction | "delete" } | null>(null);
+  const appRequestSequence = useRef(0);
+  const logsRequestSequence = useRef(0);
+  const activeRoute = useRef(routeKey);
+  const [feedback, setFeedback] = useState<{ routeKey: string; message: string; error: boolean } | null>(() => {
     const message = (location.state as { message?: string } | null)?.message;
-    return message ? { message, error: false } : null;
+    return message ? { routeKey, message, error: false } : null;
   });
+  const pendingAction = pendingRequest?.routeKey === routeKey ? pendingRequest.action : null;
+  const visibleFeedback = feedback?.routeKey === routeKey ? feedback : null;
+
+  useLayoutEffect(() => {
+    activeRoute.current = routeKey;
+    return () => { activeRoute.current = ""; };
+  }, [routeKey]);
 
   const loadApp = useCallback(async () => {
+    const request = ++appRequestSequence.current;
     setLoading(true);
     setAppError("");
+    setApp(null);
     try {
-      setApp(await getApp(projectId, id));
+      const nextApp = await getApp(projectId, id);
+      if (request !== appRequestSequence.current) return;
+      setApp(nextApp);
     } catch (requestError) {
+      if (request !== appRequestSequence.current) return;
       setAppError(errorMessage(requestError, "应用详情加载失败。"));
     } finally {
-      setLoading(false);
+      if (request === appRequestSequence.current) setLoading(false);
     }
   }, [id, projectId]);
 
   const loadLogs = useCallback(async () => {
+    const request = ++logsRequestSequence.current;
     setLogsLoading(true);
     setLogsError("");
+    setLogs("");
     try {
-      setLogs(await getAppLogs(projectId, id));
+      const nextLogs = await getAppLogs(projectId, id);
+      if (request !== logsRequestSequence.current) return;
+      setLogs(nextLogs);
     } catch (requestError) {
+      if (request !== logsRequestSequence.current) return;
       setLogsError(errorMessage(requestError, "日志加载失败。"));
     } finally {
-      setLogsLoading(false);
+      if (request === logsRequestSequence.current) setLogsLoading(false);
     }
   }, [id, projectId]);
 
@@ -65,20 +86,28 @@ export function AppDetailPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadApp();
     void loadLogs();
+    return () => {
+      appRequestSequence.current += 1;
+      logsRequestSequence.current += 1;
+    };
   }, [loadApp, loadLogs]);
 
   async function runAction(action: LifecycleAction) {
     if (!app || pendingAction) return;
-    setPendingAction(action);
+    const requestedRoute = routeKey;
+    setPendingRequest({ routeKey: requestedRoute, action });
     setFeedback(null);
     try {
       await runLifecycleAction(projectId, app.id, action);
-      setFeedback({ message: `${ACTION_LABELS[action]}请求已提交。`, error: false });
+      if (activeRoute.current !== requestedRoute) return;
+      setFeedback({ routeKey: requestedRoute, message: `${ACTION_LABELS[action]}请求已提交。`, error: false });
       await loadApp();
     } catch (requestError) {
-      setFeedback({ message: errorMessage(requestError, `${ACTION_LABELS[action]}失败，请重试。`), error: true });
+      if (activeRoute.current === requestedRoute) {
+        setFeedback({ routeKey: requestedRoute, message: errorMessage(requestError, `${ACTION_LABELS[action]}失败，请重试。`), error: true });
+      }
     } finally {
-      setPendingAction(null);
+      setPendingRequest((current) => current?.routeKey === requestedRoute ? null : current);
     }
   }
 
@@ -89,15 +118,20 @@ export function AppDetailPage() {
   async function confirmDelete(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!app || pendingAction) return;
-    setPendingAction("delete");
+    const requestedRoute = routeKey;
+    setPendingRequest({ routeKey: requestedRoute, action: "delete" });
     setFeedback(null);
     try {
       await deleteApp(projectId, app.id);
+      if (activeRoute.current !== requestedRoute) return;
       deleteDialog.current?.close();
       navigate(projectAppsPath(projectId), { replace: true, state: { message: "应用已删除。" } });
     } catch (requestError) {
-      setFeedback({ message: errorMessage(requestError, "删除应用失败，请重试。"), error: true });
-      setPendingAction(null);
+      if (activeRoute.current === requestedRoute) {
+        setFeedback({ routeKey: requestedRoute, message: errorMessage(requestError, "删除应用失败，请重试。"), error: true });
+      }
+    } finally {
+      setPendingRequest((current) => current?.routeKey === requestedRoute ? null : current);
     }
   }
 
@@ -141,10 +175,10 @@ export function AppDetailPage() {
         </div>
       </header>
 
-      {feedback ? (
-        <div className={`feedback ${feedback.error ? "feedback-error" : "feedback-success"}`} role={feedback.error ? "alert" : "status"}>
-          {!feedback.error ? <CircleCheck size={17} aria-hidden="true" /> : null}
-          {feedback.message}
+      {visibleFeedback ? (
+        <div className={`feedback ${visibleFeedback.error ? "feedback-error" : "feedback-success"}`} role={visibleFeedback.error ? "alert" : "status"}>
+          {!visibleFeedback.error ? <CircleCheck size={17} aria-hidden="true" /> : null}
+          {visibleFeedback.message}
         </div>
       ) : null}
 

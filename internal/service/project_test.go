@@ -47,10 +47,15 @@ func TestCreateProjectCompensatesNamespaceWhenDatabaseFails(t *testing.T) {
 	databaseErr := errors.New("database unavailable")
 	repo := &fakeProjectStore{lookupErr: gorm.ErrRecordNotFound, createErr: databaseErr}
 	adapter := &fakeAppAdapter{}
-	_, err := newProjectService(repo, adapter).CreateProject(context.Background(), 7, "个人网站")
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := newProjectService(repo, adapter).CreateProject(ctx, 7, "个人网站")
 	assertErrorCode(t, err, errcode.ErrDatabase)
 	if adapter.deletedNamespace == "" {
 		t.Fatal("数据库写入失败后未删除已创建的命名空间")
+	}
+	if adapter.deleteNamespaceCtx == nil || adapter.deleteNamespaceCtx.Err() != nil {
+		t.Fatal("命名空间补偿不应继承已取消的请求 context")
 	}
 }
 

@@ -14,6 +14,8 @@ type fakeAppAdapter struct {
 	createAppFunc       func(k8s.AppSpec) error
 	ensuredNamespace    string
 	createdSpec         k8s.AppSpec
+	deleteNamespaceCtx  context.Context
+	deleteAppCtx        context.Context
 	deletedNamespace    string
 	deletedAppName      string
 	deletedAppNamespace string
@@ -24,7 +26,8 @@ func (a *fakeAppAdapter) EnsureNamespace(_ context.Context, namespace string) er
 	return a.ensureNamespaceErr
 }
 
-func (a *fakeAppAdapter) DeleteNamespace(_ context.Context, namespace string) error {
+func (a *fakeAppAdapter) DeleteNamespace(ctx context.Context, namespace string) error {
+	a.deleteNamespaceCtx = ctx
 	a.deletedNamespace = namespace
 	return a.deleteNamespaceErr
 }
@@ -37,7 +40,8 @@ func (a *fakeAppAdapter) CreateApp(_ context.Context, spec k8s.AppSpec) error {
 	return a.createAppErr
 }
 
-func (a *fakeAppAdapter) DeleteApp(_ context.Context, name, namespace string) error {
+func (a *fakeAppAdapter) DeleteApp(ctx context.Context, name, namespace string) error {
+	a.deleteAppCtx = ctx
 	a.deletedAppName = name
 	a.deletedAppNamespace = namespace
 	return a.deleteAppErr

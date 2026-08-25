@@ -499,16 +499,16 @@ Kubernetes 创建失败会回滚未提交的 App 记录。由于失败请求也�
 **同步策略**：
 ```go
 // 创建应用后立即异步同步一次
-go syncAppStatus(app.ID)
+go syncAppStatus(app.ID, app.Name, project.Namespace)
 
 // 查询应用列表时异步同步所有应用
 for _, app := range apps {
-    go syncAppStatus(app.ID)
+    go syncAppStatus(app.ID, app.Name, project.Namespace)
 }
 
 // 查询单个应用时同步等待
-syncAppStatus(app.ID)
-app = repo.GetAppByID(app.ID) // 重新查询
+syncAppStatus(app.ID, app.Name, project.Namespace)
+app = repo.GetByProjectAndID(project.ID, app.ID) // 重新查询
 ```
 
 **状态定义**：
@@ -665,7 +665,7 @@ CREATE TABLE users (
   status        TINYINT DEFAULT 1 COMMENT '状态：1-正常，0-禁用',
   created_at    DATETIME NOT NULL COMMENT '创建时间',
   updated_at    DATETIME NOT NULL COMMENT '更新时间',
-  deleted_at    DATETIME COMMENT 'GORM 基础字段；业务删除使用硬删除',
+  deleted_at    DATETIME COMMENT '删除时间（软删除）',
 
   INDEX idx_username (username),
   INDEX idx_email (email),
@@ -708,7 +708,7 @@ CREATE TABLE apps (
   project_id    INT UNSIGNED NOT NULL COMMENT '所属项目ID',
   created_at    DATETIME NOT NULL COMMENT '创建时间',
   updated_at    DATETIME NOT NULL COMMENT '更新时间',
-  deleted_at    DATETIME COMMENT '删除时间（软删除）',
+  deleted_at    DATETIME COMMENT 'GORM 基础字段；业务删除使用硬删除',
 
   UNIQUE KEY idx_apps_project_name (name, project_id),
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
@@ -768,7 +768,7 @@ CREATE TABLE apps (
 
 ### 6.5 旧模型切换门禁
 
-切换前在测试环境运行 `make legacy-inventory`，只读列出旧 `apps` 活动记录以及带 `managed-by=astro` 标签的 `astro-user-*` Namespace。该命令要求 `ASTRO_RUNTIME_ENV=test`、`ASTRO_DATABASE_HOST/PORT/USER/PASSWORD/DBNAME` 与 `ASTRO_KUBERNETES_KUBECONFIG`，只执行 SQL `SELECT` 与 `kubectl get`；删除操作必须根据清单另行确认后逐项执行。
+切换前在测试环境运行 `make legacy-inventory`，只读列出旧 `apps` 活动记录以及带 `managed-by=astro` 标签的 `astro-user-*` Namespace。该命令要求 `ASTRO_RUNTIME_ENV=test` 和 `ASTRO_DATABASE_PORT`，按宿主端口唯一定位运行中的 Docker 数据库容器，并在容器内使用现有客户端与凭据。Kubernetes 优先使用显式 kubeconfig 或 kubectl 默认配置，否则仅在本机恰有一个 kind 集群时回退；所有路径都只接受 `kind-*` context。盘点只执行 SQL `SELECT` 与 `kubectl get`；用户按清单确认后，再通过 `make legacy-delete-namespace LEGACY_NAMESPACE=astro-user-<数字>` 定点删除已复核为空的旧 Namespace。
 
 服务启动时仅识别同时包含 `user_id`、`namespace` 且不包含 `project_id` 的旧 `apps` 表。存在活动 App 时拒绝启动；表为空时删除旧表，再由 `AutoMigrate` 建立带必填项目外键的新表。不会自动创建默认项目，也不会迁移旧应用。
 

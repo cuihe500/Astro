@@ -58,7 +58,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, userID uint, name st
 	}
 
 	if err := s.repo.Create(project); err != nil {
-		cleanupErr := s.adapter.DeleteNamespace(ctx, project.Namespace)
+		cleanupErr := s.adapter.DeleteNamespace(context.WithoutCancel(ctx), project.Namespace)
 		if cleanupErr != nil {
 			logger.Error("项目创建失败且命名空间补偿失败",
 				zap.Uint("user_id", userID),

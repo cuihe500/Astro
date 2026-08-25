@@ -63,12 +63,16 @@ func (r *fakeProjectReader) GetByID(uint) (*model.Project, error) { return r.pro
 func TestCreateAppFailureRollsBackRecordAndCleansPossibleResources(t *testing.T) {
 	project := &model.Project{BaseModel: model.BaseModel{ID: 3}, UserID: 7, Namespace: "astro-project-test"}
 	repo := &fakeAppStore{project: project, nameLookupErr: gorm.ErrRecordNotFound}
+	ctx, cancel := context.WithCancel(context.Background())
 	adapter := &fakeAppAdapter{
-		createAppErr: errors.New("kubernetes create failed"),
 		deleteAppErr: errors.New("kubernetes cleanup failed"),
+		createAppFunc: func(k8s.AppSpec) error {
+			cancel()
+			return errors.New("kubernetes create failed")
+		},
 	}
 	_, err := newAppService(repo, &fakeProjectReader{project: project}, adapter).CreateApp(
-		context.Background(),
+		ctx,
 		CreateAppRequest{Name: "demo", Image: "nginx:latest", Replicas: 1, ProjectID: 3, UserID: 7},
 	)
 	assertErrorCode(t, err, errcode.ErrAppCreateFailed)
@@ -80,6 +84,9 @@ func TestCreateAppFailureRollsBackRecordAndCleansPossibleResources(t *testing.T)
 	}
 	if adapter.deletedAppName != "demo" || adapter.deletedAppNamespace != project.Namespace {
 		t.Fatal("Kubernetes 创建失败后未清理可能残留的资源")
+	}
+	if adapter.deleteAppCtx == nil || adapter.deleteAppCtx.Err() != nil {
+		t.Fatal("应用补偿不应继承已取消的请求 context")
 	}
 	if strings.Contains(err.Error(), "数据库错误") ||
 		!strings.Contains(err.Error(), "kubernetes create failed") ||

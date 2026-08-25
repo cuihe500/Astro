@@ -94,7 +94,7 @@ func (s *AppService) CreateApp(ctx context.Context, req CreateAppRequest) (*mode
 	})
 	if err != nil {
 		if resourcesTouched {
-			if cleanupErr := s.adapter.DeleteApp(ctx, app.Name, createdNamespace); cleanupErr != nil {
+			if cleanupErr := s.adapter.DeleteApp(context.WithoutCancel(ctx), app.Name, createdNamespace); cleanupErr != nil {
 				logger.Error("应用事务失败且 Kubernetes 资源补偿失败",
 					zap.Uint("project_id", req.ProjectID),
 					zap.String("app_name", app.Name),

@@ -6,7 +6,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var Client *kubernetes.Clientset
+var Client kubernetes.Interface
 
 // Init 初始化 K8s 客户端
 func Init(kubeconfig string) error {

@@ -10,9 +10,11 @@
 make build     # 编译到 bin/astro
 make run       # 本地运行
 make test      # go test -v ./...
+make test-integration # 显式连接空的临时 MariaDB，验证迁移、约束与事务
 make lint      # golangci-lint run
 make swagger   # 重新生成 docs/（改了 handler 注解后必须跑）
 make legacy-inventory # 仅在 test 环境只读盘点旧 App 与 Namespace
+make legacy-delete-namespace LEGACY_NAMESPACE=astro-user-<数字> # 用户确认后定点删除空旧 Namespace
 make clean
 ```
 
@@ -64,6 +66,7 @@ if project.UserID != userID {
 - App 必须以 `project_id + app_id` 查询，Kubernetes 操作只使用已授权 Project 保存的 Namespace。
 - 同一用户内 Project 名唯一；同一 Project 内 App 名唯一；App 的 `project_id` 非空且受外键约束。
 - App 创建在锁定 Project 的事务内写入未提交记录并创建 Kubernetes 资源；只有回调和事务提交都成功后记录才可见，提交失败必须幂等删除已创建资源。
+- Project/App 创建失败后的 Kubernetes 补偿使用 `context.WithoutCancel(ctx)`，确保请求取消后仍会尝试清理已触碰的资源。
 - 所有响应继续使用 `code`、`message`、`data`；旧 `/api/v1/apps` 不提供兼容入口。
 
 ### 4. Validation & Error Matrix
@@ -88,7 +91,7 @@ if project.UserID != userID {
 ### 6. Tests Required
 
 - 路由测试断言全部 App 路由含 `:project_id`，旧 `/api/v1/apps` 返回不存在。
-- Service 测试覆盖项目越权、错项目 App、项目内重名、非空项目删除和 K8s/数据库补偿失败。
+- Service 测试覆盖项目越权、错项目 App、项目内重名、非空项目删除和 K8s/数据库补偿失败，并断言补偿 context 不继承请求取消状态。
 - Repository/MariaDB 集成测试断言 Project 行锁使 App 创建与项目删除串行，未提交 App 对其他事务不可见。
 - Web 测试断言项目 ID 在 API 与页面路由间完整传播，切换项目时不保留上一项目数据。
 
