@@ -3,7 +3,7 @@
   "name": "astro-image-release-pipeline",
   "title": "实现 Astro 镜像与发布流水线",
   "description": "在 Astro 仓库实现安全运行时配置、API/Web 镜像定义、GitHub Actions 构建测试 GHCR 发布及受限测试/生产部署调用。",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "cuihe500",
   "assignee": "cuihe500",
   "createdAt": "2026-08-20",
-  "completedAt": null,
+  "completedAt": "2026-08-25",
   "branch": null,
   "base_branch": "main",
   "worktree_path": null,
@@ -22,5 +22,7 @@
   "parent": "08-20-cicd-test-production-deploy",
   "relatedFiles": [],
   "notes": "",
-  "meta": {}
+  "meta": {
+    "outcome": "cancelled"
+  }
 }
