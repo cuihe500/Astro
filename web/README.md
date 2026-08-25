@@ -1,6 +1,6 @@
 # Astro Web
 
-Astro Web 是面向用户的 React + TypeScript + Vite 单页前端。首版提供登录、注册、应用创建、生命周期管理和最近日志查看；认证服务为 **BytCloud Auth**，登录按钮使用 **BytCloud**。
+Astro Web 是面向用户的 React + TypeScript + Vite 单页前端。首版提供登录、注册、项目管理、项目内应用管理和最近日志查看；认证服务为 **BytCloud Auth**，登录按钮使用 **BytCloud**。
 
 ## 命令
 
@@ -50,8 +50,9 @@ https://astro-test.bytcloud.org/oauth2/bytcloudauth/callback
 - `src/app`：路由、登录守卫和 OAuth2 callback loader。
 - `src/components`：跨业务页面复用的工作台框架和反馈状态。
 - `src/features/auth`：认证 API、唯一会话读写边界和认证页面。
-- `src/features/apps`：应用类型、API、状态语义和应用页面。
-- `src/lib`：统一响应解包、Bearer 请求和错误类型。
+- `src/features/projects`：项目类型、API、列表、创建和空项目删除页面。
+- `src/features/apps`：项目内应用类型、API、状态语义和应用页面。
+- `src/lib`：统一响应解包、Bearer 请求、项目路由构造和错误类型。
 - `src/styles.css`：响应式布局、颜色 token、focus 和 reduced-motion 样式。
 
-应用页面不直接解析后端原始 JSON；所有 API 均通过 `code === 0` 判断成功，并优先展示后端 `message`。
+项目和应用页面不直接解析后端原始 JSON；所有 API 均通过 `code === 0` 判断成功，并优先展示后端 `message`。

@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "检查非空项目外键、唯一约束与限制删除"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "检查项目错误码和所有失败补偿均被处理"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "执行权限、路由、Swagger和全量Make校验"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "project_id端到端数据流检查"}

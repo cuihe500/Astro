@@ -44,6 +44,12 @@ const (
 	ErrAppRestartFail  Code = 21008 // 重启应用失败
 	ErrAppCreateFailed Code = 21009 // 创建应用失败（别名）
 
+	// 项目相关错误 22xxx
+	ErrProjectNotFound   Code = 22001 // 项目不存在
+	ErrProjectExists     Code = 22002 // 项目已存在
+	ErrProjectNotEmpty   Code = 22003 // 项目仍包含应用
+	ErrProjectCreateFail Code = 22004 // 创建项目失败
+
 	// 系统错误 3xxxx
 	ErrInternal     Code = 30001 // 服务器内部错误
 	ErrDatabase     Code = 30002 // 数据库错误
@@ -86,6 +92,12 @@ var codeMessages = map[Code]string{
 	ErrAppStopFail:     "停止应用失败",
 	ErrAppRestartFail:  "重启应用失败",
 	ErrAppCreateFailed: "创建应用失败",
+
+	// 项目相关错误
+	ErrProjectNotFound:   "项目不存在",
+	ErrProjectExists:     "项目已存在",
+	ErrProjectNotEmpty:   "项目仍包含应用",
+	ErrProjectCreateFail: "创建项目失败",
 
 	// 系统错误
 	ErrInternal:     "服务器内部错误",

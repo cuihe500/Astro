@@ -14,9 +14,10 @@ import "github.com/cuihe500/astro/pkg/logger"
 logger.Info("应用创建成功",
     zap.Uint("app_id", app.ID),
     zap.String("name", app.Name),
-    zap.String("namespace", app.Namespace))
+    zap.Uint("project_id", app.ProjectID),
+    zap.String("namespace", project.Namespace))
 
-logger.Error("K8s 创建失败", zap.Error(err), zap.Uint("user_id", userID))
+logger.Error("K8s 创建失败", zap.Error(err), zap.Uint("project_id", project.ID))
 ```
 
 ## 结构化字段

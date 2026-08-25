@@ -2,6 +2,8 @@ package repository
 
 import (
 	"github.com/cuihe500/astro/internal/model"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // AppRepository 应用数据仓库
@@ -12,9 +14,24 @@ func NewAppRepository() *AppRepository {
 	return &AppRepository{}
 }
 
-// Create 创建应用记录
-func (r *AppRepository) Create(app *model.App) error {
-	return DB.Create(app).Error
+// CreateInProject 锁定所属项目，并在提交前完成应用资源创建。
+func (r *AppRepository) CreateInProject(app *model.App, userID uint, beforeCommit func(string) error) (*model.Project, error) {
+	var project model.Project
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND user_id = ?", app.ProjectID, userID).
+			First(&project).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(app).Error; err != nil {
+			return err
+		}
+		return beforeCommit(project.Namespace)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
 }
 
 // Update 更新应用信息
@@ -22,33 +39,33 @@ func (r *AppRepository) Update(app *model.App) error {
 	return DB.Save(app).Error
 }
 
-// Delete 删除应用记录（软删除）
+// Delete 硬删除应用记录
 func (r *AppRepository) Delete(id uint) error {
-	return DB.Delete(&model.App{}, id).Error
+	return DB.Unscoped().Delete(&model.App{}, id).Error
 }
 
-// GetByID 按 ID 查询应用
-func (r *AppRepository) GetByID(id uint) (*model.App, error) {
+// GetByProjectAndID 按项目和 ID 查询应用
+func (r *AppRepository) GetByProjectAndID(projectID, id uint) (*model.App, error) {
 	var app model.App
-	if err := DB.First(&app, id).Error; err != nil {
+	if err := DB.Where("project_id = ? AND id = ?", projectID, id).First(&app).Error; err != nil {
 		return nil, err
 	}
 	return &app, nil
 }
 
-// GetByUserID 按用户 ID 查询应用列表
-func (r *AppRepository) GetByUserID(userID uint) ([]model.App, error) {
+// GetByProjectID 按项目 ID 查询应用列表
+func (r *AppRepository) GetByProjectID(projectID uint) ([]model.App, error) {
 	var apps []model.App
-	if err := DB.Where("user_id = ?", userID).Find(&apps).Error; err != nil {
+	if err := DB.Where("project_id = ?", projectID).Order("created_at DESC").Find(&apps).Error; err != nil {
 		return nil, err
 	}
 	return apps, nil
 }
 
-// GetByUserAndName 按用户 ID 和应用名查询
-func (r *AppRepository) GetByUserAndName(userID uint, name string) (*model.App, error) {
+// GetByProjectAndName 按项目 ID 和应用名查询
+func (r *AppRepository) GetByProjectAndName(projectID uint, name string) (*model.App, error) {
 	var app model.App
-	if err := DB.Where("user_id = ? AND name = ?", userID, name).First(&app).Error; err != nil {
+	if err := DB.Where("project_id = ? AND name = ?", projectID, name).First(&app).Error; err != nil {
 		return nil, err
 	}
 	return &app, nil

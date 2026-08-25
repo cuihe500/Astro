@@ -8,13 +8,16 @@ import { CreateAppPage } from "../features/apps/pages/CreateAppPage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { OAuthCallbackPage, type OAuthCallbackData } from "../features/auth/pages/OAuthCallbackPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
+import { CreateProjectPage } from "../features/projects/pages/CreateProjectPage";
+import { ProjectsListPage } from "../features/projects/pages/ProjectsListPage";
+import { projectsPath } from "../lib/routes";
 
 export function rootLoader() {
-  return redirect(getSessionToken() ? "/apps" : "/login");
+  return redirect(getSessionToken() ? projectsPath : "/login");
 }
 
 function publicOnlyLoader() {
-  return getSessionToken() ? redirect("/apps") : null;
+  return getSessionToken() ? redirect(projectsPath) : null;
 }
 
 function protectedLoader() {
@@ -44,14 +47,14 @@ export async function oauthCallbackLoader({ params, request }: LoaderFunctionArg
   try {
     const session = await completeBytCloudAuth(provider, code, state);
     setSessionToken(session.token);
-    return redirect("/apps");
+    return redirect(projectsPath);
   } catch (error) {
     return { error: bytCloudErrorMessage(error) };
   }
 }
 
 function fallbackLoader() {
-  return redirect(getSessionToken() ? "/apps" : "/login");
+  return redirect(getSessionToken() ? projectsPath : "/login");
 }
 
 export const router = createBrowserRouter([
@@ -63,9 +66,11 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     loader: protectedLoader,
     children: [
-      { path: "/apps", element: <AppsListPage /> },
-      { path: "/apps/new", element: <CreateAppPage /> },
-      { path: "/apps/:id", element: <AppDetailPage /> },
+      { path: "/projects", element: <ProjectsListPage /> },
+      { path: "/projects/new", element: <CreateProjectPage /> },
+      { path: "/projects/:projectId/apps", element: <AppsListPage /> },
+      { path: "/projects/:projectId/apps/new", element: <CreateAppPage /> },
+      { path: "/projects/:projectId/apps/:id", element: <AppDetailPage /> },
     ],
   },
   { path: "*", loader: fallbackLoader },

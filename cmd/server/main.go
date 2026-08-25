@@ -88,7 +88,8 @@ func main() {
 	authApi := api.Group("")
 	authApi.Use(middleware.Auth())
 	{
-		// 应用管理路由
+		// 项目与应用管理路由
+		handler.RegisterProjectRoutes(authApi)
 		handler.RegisterAppRoutes(authApi)
 	}
 

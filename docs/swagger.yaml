@@ -9,22 +9,36 @@ definitions:
     properties:
       image:
         example: nginx:latest
+        maxLength: 256
         type: string
       name:
         example: my-nginx
+        maxLength: 63
+        minLength: 1
         type: string
       port:
         example: 80
+        maximum: 65535
+        minimum: 1
         type: integer
       replicas:
         example: 2
         maximum: 10
-        minimum: 0
+        minimum: 1
         type: integer
     required:
     - image
     - name
     - replicas
+    type: object
+  handler.CreateProjectRequest:
+    properties:
+      name:
+        example: 个人网站
+        maxLength: 64
+        type: string
+    required:
+    - name
     type: object
   handler.LoginRequest:
     properties:
@@ -84,239 +98,6 @@ info:
   title: Astro API
   version: "1.0"
 paths:
-  /apps:
-    get:
-      description: 获取当前用户的所有应用
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 获取应用列表
-      tags:
-      - 应用
-    post:
-      consumes:
-      - application/json
-      description: 创建一个新的容器应用
-      parameters:
-      - description: 应用信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateAppRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 创建成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "400":
-          description: 参数错误
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 创建应用
-      tags:
-      - 应用
-  /apps/{id}:
-    delete:
-      description: 删除指定的应用
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 删除成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 删除应用
-      tags:
-      - 应用
-    get:
-      description: 获取指定应用的详细信息
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 获取应用详情
-      tags:
-      - 应用
-  /apps/{id}/logs:
-    get:
-      description: 获取指定应用的容器日志
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - default: 100
-        description: 日志行数
-        in: query
-        name: lines
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.AppLogsResponse'
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 获取应用日志
-      tags:
-      - 应用
-  /apps/{id}/restart:
-    post:
-      description: 重启指定的应用
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 重启成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 重启应用
-      tags:
-      - 应用
-  /apps/{id}/start:
-    post:
-      description: 启动指定的应用
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 启动成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 启动应用
-      tags:
-      - 应用
-  /apps/{id}/stop:
-    post:
-      description: 停止指定的应用
-      parameters:
-      - description: 应用ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 停止成功
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "404":
-          description: 应用不存在
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 停止应用
-      tags:
-      - 应用
   /login:
     post:
       consumes:
@@ -424,6 +205,355 @@ paths:
       summary: OAuth2 登录入口
       tags:
       - 用户
+  /projects:
+    get:
+      description: 获取当前用户的所有项目
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 获取项目列表
+      tags:
+      - 项目
+    post:
+      consumes:
+      - application/json
+      description: 创建项目并建立独立的 Kubernetes Namespace
+      parameters:
+      - description: 项目信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 创建项目
+      tags:
+      - 项目
+  /projects/{project_id}:
+    delete:
+      description: 删除空项目及其 Kubernetes Namespace
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 项目不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 删除项目
+      tags:
+      - 项目
+    get:
+      description: 获取当前用户的指定项目
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 项目不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 获取项目详情
+      tags:
+      - 项目
+  /projects/{project_id}/apps:
+    get:
+      description: 获取指定项目的所有应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 获取应用列表
+      tags:
+      - 应用
+    post:
+      consumes:
+      - application/json
+      description: 在指定项目中创建一个新的容器应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateAppRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 创建应用
+      tags:
+      - 应用
+  /projects/{project_id}/apps/{id}:
+    delete:
+      description: 删除指定项目内的应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 应用不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 删除应用
+      tags:
+      - 应用
+    get:
+      description: 获取指定项目内应用的详细信息
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 应用不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 获取应用详情
+      tags:
+      - 应用
+  /projects/{project_id}/apps/{id}/logs:
+    get:
+      description: 获取指定项目内应用的容器日志
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 100
+        description: 日志行数
+        in: query
+        name: lines
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.AppLogsResponse'
+              type: object
+      security:
+      - Bearer: []
+      summary: 获取应用日志
+      tags:
+      - 应用
+  /projects/{project_id}/apps/{id}/restart:
+    post:
+      description: 重启指定项目内的应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 重启成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 重启应用
+      tags:
+      - 应用
+  /projects/{project_id}/apps/{id}/start:
+    post:
+      description: 启动指定项目内的应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 启动成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 启动应用
+      tags:
+      - 应用
+  /projects/{project_id}/apps/{id}/stop:
+    post:
+      description: 停止指定项目内的应用
+      parameters:
+      - description: 项目ID
+        in: path
+        name: project_id
+        required: true
+        type: integer
+      - description: 应用ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 停止成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 停止应用
+      tags:
+      - 应用
   /register:
     post:
       consumes:

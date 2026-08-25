@@ -9,7 +9,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -43,6 +43,8 @@ type PodInfo struct {
 type AppAdapter interface {
 	// EnsureNamespace 确保命名空间存在
 	EnsureNamespace(ctx context.Context, namespace string) error
+	// DeleteNamespace 删除命名空间
+	DeleteNamespace(ctx context.Context, namespace string) error
 	// CreateApp 创建应用
 	CreateApp(ctx context.Context, spec AppSpec) error
 	// DeleteApp 删除应用
@@ -71,7 +73,7 @@ func (a *ClientGoAdapter) EnsureNamespace(ctx context.Context, namespace string)
 	if err == nil {
 		return nil
 	}
-	if !errors.IsNotFound(err) {
+	if !apierrors.IsNotFound(err) {
 		return err
 	}
 
@@ -87,13 +89,17 @@ func (a *ClientGoAdapter) EnsureNamespace(ctx context.Context, namespace string)
 	return err
 }
 
+// DeleteNamespace 删除命名空间，不存在时视为成功。
+func (a *ClientGoAdapter) DeleteNamespace(ctx context.Context, namespace string) error {
+	err := Client.CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
 // CreateApp 创建应用（Deployment + Service）
 func (a *ClientGoAdapter) CreateApp(ctx context.Context, spec AppSpec) error {
-	// 确保命名空间存在
-	if err := a.EnsureNamespace(ctx, spec.Namespace); err != nil {
-		return fmt.Errorf("创建命名空间失败: %w", err)
-	}
-
 	// 构建标签
 	labels := map[string]string{
 		"app":        spec.Name,
@@ -169,6 +175,10 @@ func (a *ClientGoAdapter) CreateApp(ctx context.Context, spec AppSpec) error {
 		}
 		_, err = Client.CoreV1().Services(spec.Namespace).Create(ctx, service, metav1.CreateOptions{})
 		if err != nil {
+			cleanupErr := Client.AppsV1().Deployments(spec.Namespace).Delete(ctx, spec.Name, metav1.DeleteOptions{})
+			if cleanupErr != nil && !apierrors.IsNotFound(cleanupErr) {
+				return fmt.Errorf("创建 Service 失败: %w；回滚 Deployment 失败: %v", err, cleanupErr)
+			}
 			return fmt.Errorf("创建 Service 失败: %w", err)
 		}
 	}
@@ -180,13 +190,13 @@ func (a *ClientGoAdapter) CreateApp(ctx context.Context, spec AppSpec) error {
 func (a *ClientGoAdapter) DeleteApp(ctx context.Context, name, namespace string) error {
 	// 删除 Deployment
 	err := Client.AppsV1().Deployments(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("删除 Deployment 失败: %w", err)
 	}
 
 	// 删除 Service（忽略不存在的错误）
 	err = Client.CoreV1().Services(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("删除 Service 失败: %w", err)
 	}
 
@@ -213,7 +223,7 @@ func (a *ClientGoAdapter) ScaleApp(ctx context.Context, name, namespace string, 
 func (a *ClientGoAdapter) GetAppStatus(ctx context.Context, name, namespace string) (*AppStatus, error) {
 	deployment, err := Client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return &AppStatus{Status: "unknown"}, nil
 		}
 		return nil, fmt.Errorf("获取 Deployment 失败: %w", err)

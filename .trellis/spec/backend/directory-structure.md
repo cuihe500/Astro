@@ -12,10 +12,11 @@ internal/
 ├── handler/            # HTTP 处理器：参数绑定校验、调用 service、统一响应
 │   ├── response.go     # 统一响应结构 Response{code,message,data} + 辅助函数
 │   ├── user.go         # 用户注册/登录
-│   └── app.go          # 应用 CRUD/启停/日志
+│   ├── project.go      # 项目创建、查询与空项目删除
+│   └── app.go          # 项目内应用创建、查询、删除、启停与日志
 ├── service/            # 业务逻辑：权限检查、errcode 包装、编排 repository 与 k8s
 ├── repository/         # 数据访问：GORM 查询，db.go 持有包级 DB 变量
-├── model/              # GORM 模型（BaseModel + User + App）
+├── model/              # GORM 模型（BaseModel + User + Project + App）
 ├── middleware/         # Gin 中间件（auth.go：JWT 认证）
 └── k8s/                # K8s 封装（client.go 连接，adapter.go AppAdapter 接口）
 pkg/

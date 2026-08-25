@@ -2,6 +2,7 @@ import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { errorMessage } from "../../../lib/api";
+import { projectsPath } from "../../../lib/routes";
 import { bytCloudErrorMessage, getBytCloudAuthUrl, login } from "../api";
 import { setSessionToken } from "../session";
 import { AuthLayout } from "./AuthLayout";
@@ -50,7 +51,7 @@ export function LoginPage() {
     try {
       const session = await login(username.trim(), password);
       setSessionToken(session.token);
-      navigate("/apps", { replace: true });
+      navigate(projectsPath, { replace: true });
     } catch (error) {
       setFormError(errorMessage(error, "登录失败，请重试。"));
       setSubmitting(false);

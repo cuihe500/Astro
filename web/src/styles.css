@@ -138,7 +138,7 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   font-weight: 680;
   text-decoration: none;
 }
-.button { min-height: 42px; gap: 8px; padding: 9px 15px; }
+.button { min-height: 44px; gap: 8px; padding: 9px 15px; }
 .button-small { min-height: 36px; padding: 7px 12px; font-size: 14px; }
 .button-block { width: 100%; }
 .button-primary { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
@@ -150,14 +150,16 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .button-auth { width: 100%; min-height: 50px; color: #fff; background: var(--color-primary-dark); border-color: var(--color-primary-dark); }
 .button-auth:hover { background: #044a2b; border-color: #044a2b; }
 .icon-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   color: var(--color-muted);
   background: var(--color-surface);
   border-color: var(--color-border-strong);
 }
 .icon-button:hover { color: var(--color-primary-dark); border-color: var(--color-primary); background: var(--color-primary-soft); }
+.icon-button-danger { color: var(--color-danger); border-color: #e1aaa5; }
+.icon-button-danger:hover { color: #fff; background: var(--color-danger); border-color: var(--color-danger); }
 
 .feedback {
   display: flex;
@@ -190,6 +192,26 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .page-state-empty svg { width: 32px; height: 32px; color: var(--color-info); }
 .page-state-empty h2 { margin: 0; color: var(--color-text); font-size: 19px; }
 .list-loading { padding: 70px 0; color: var(--color-muted); text-align: center; }
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 16px;
+}
+.project-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.project-card > svg { color: var(--color-primary); }
+.project-card-content { min-width: 0; flex: 1; }
+.project-card h2 { margin: 0; font-size: 19px; overflow-wrap: anywhere; }
+.project-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .app-list-wrap { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
 .app-list-header, .app-row {
@@ -321,6 +343,7 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   .page-header { align-items: flex-start; flex-direction: column; gap: 16px; margin-bottom: 22px; }
   .page-actions { width: 100%; justify-content: flex-end; }
   .page-actions .button { flex: 1; }
+  .project-card-actions .button { flex: 1; }
   .app-list-wrap { border: 0; background: transparent; }
   .app-list-header { display: none; }
   .app-list li { margin-bottom: 10px; border: 1px solid var(--color-border) !important; border-radius: var(--radius); background: var(--color-surface); }

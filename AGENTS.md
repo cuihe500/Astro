@@ -82,28 +82,32 @@ Astro 是一个面向 C 端用户的容器即服务 (CaaS) 平台，提供简单
 - **资源监控**: 查看 CPU、内存使用情况 🔄
 - **应用模板**: 预置常用应用模板（数据库、Web 服务等）🔄
 
-## 当前进度（2025-12-11）
+## 当前进度（2026-08-24）
 
 ### MVP 第一阶段 ✅ 已完成
 - 用户注册/登录/JWT 认证
 - 应用 CRUD（创建/查询/删除）
 - 应用启动/停止/重启
 - 应用日志查看
-- 多租户隔离（每用户独立命名空间）
+- 项目管理与项目级多租户隔离（每项目独立命名空间）
 
 ### 可用 API
 | 方法 | 路由 | 功能 |
 |-----|------|-----|
 | POST | /api/v1/register | 用户注册 |
 | POST | /api/v1/login | 用户登录 |
-| POST | /api/v1/apps | 创建应用 |
-| GET | /api/v1/apps | 应用列表 |
-| GET | /api/v1/apps/:id | 应用详情 |
-| DELETE | /api/v1/apps/:id | 删除应用 |
-| POST | /api/v1/apps/:id/start | 启动应用 |
-| POST | /api/v1/apps/:id/stop | 停止应用 |
-| POST | /api/v1/apps/:id/restart | 重启应用 |
-| GET | /api/v1/apps/:id/logs | 查看日志 |
+| POST | /api/v1/projects | 创建项目 |
+| GET | /api/v1/projects | 项目列表 |
+| GET | /api/v1/projects/:project_id | 项目详情 |
+| DELETE | /api/v1/projects/:project_id | 删除空项目 |
+| POST | /api/v1/projects/:project_id/apps | 创建应用 |
+| GET | /api/v1/projects/:project_id/apps | 应用列表 |
+| GET | /api/v1/projects/:project_id/apps/:id | 应用详情 |
+| DELETE | /api/v1/projects/:project_id/apps/:id | 删除应用 |
+| POST | /api/v1/projects/:project_id/apps/:id/start | 启动应用 |
+| POST | /api/v1/projects/:project_id/apps/:id/stop | 停止应用 |
+| POST | /api/v1/projects/:project_id/apps/:id/restart | 重启应用 |
+| GET | /api/v1/projects/:project_id/apps/:id/logs | 查看日志 |
 
 # 注意（必须遵循，绝不能违反）
 
@@ -160,3 +164,4 @@ Astro 是一个面向 C 端用户的容器即服务 (CaaS) 平台，提供简单
 30. **完成定义**: PR 合并且验收通过后才能关闭 Issue、将 Project 改为 `Done` 并归档 Trellis；`task.py finish` 仅清除会话指针，不代表完成
 31. **例外处理**: 紧急修复只能由用户明确授权，且最迟在 PR 审查或合并前补齐关联；安全漏洞必须使用 Security Advisory 或受限私有工作项，不得公开敏感信息
 32. **命令入口**: 日常 GitHub 与 Trellis 操作分别使用 Makefile 的 `github` 和 `trellis` 等目标，禁止直接调用 `gh` 或 `.trellis/scripts/*.py`；一次性 Project 初始化可在明确授权下例外执行
+33. **本机测试配置**: 本机测试环境信息统一存放在已被 Git 忽略的 `configs/config.local.yaml`；AI 可读取该文件用于本机测试，但不得提交或复制到受跟踪文件，也不得输出其中的任何具体环境值（包括容器名、端口、Kubernetes context 与凭据）
