@@ -76,3 +76,30 @@ PR #4 已合并，Issue #3 已关闭，main 流水线成功构建 ARM64 镜像�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: 归档全部存量 Trellis 任务
+
+**Date**: 2026-08-25
+**Task**: 归档全部存量 Trellis 任务
+**Branch**: `main`
+
+### Summary
+
+按用户要求归档全部 4 个未归档的 CI/CD 存量任务；保留未完成验收项并标记 outcome=cancelled。
+
+### Main Changes
+
+- 依次归档三个子任务与一个父任务
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] make trellis list --json 返回空任务列表
+
+### Status
+
+[OK] **Completed**
