@@ -39,13 +39,22 @@ type OAuthIdentity struct {
 	UserID         uint   `gorm:"index;not null" json:"user_id"`
 }
 
+// Project 用户项目模型
+type Project struct {
+	BaseModel
+	Name      string `gorm:"size:64;not null;uniqueIndex:idx_projects_user_name" json:"name"`
+	UserID    uint   `gorm:"not null;index;uniqueIndex:idx_projects_user_name" json:"user_id"`
+	Namespace string `gorm:"size:63;not null;uniqueIndex" json:"namespace"`
+	User      User   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
+}
+
 // App 应用模型
 type App struct {
 	BaseModel
-	Name      string `gorm:"size:64;not null" json:"name"`
-	Image     string `gorm:"size:256;not null" json:"image"`
-	Replicas  int    `gorm:"default:1" json:"replicas"`
-	Status    string `gorm:"size:32;default:stopped" json:"status"`
-	UserID    uint   `gorm:"index;not null" json:"user_id"`
-	Namespace string `gorm:"size:64" json:"namespace"`
+	Name      string  `gorm:"size:64;not null;uniqueIndex:idx_apps_project_name" json:"name"`
+	Image     string  `gorm:"size:256;not null" json:"image"`
+	Replicas  int     `gorm:"default:1" json:"replicas"`
+	Status    string  `gorm:"size:32;default:stopped" json:"status"`
+	ProjectID uint    `gorm:"not null;index;uniqueIndex:idx_apps_project_name" json:"project_id"`
+	Project   Project `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
 }

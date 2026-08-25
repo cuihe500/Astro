@@ -12,6 +12,7 @@ make run       # 本地运行
 make test      # go test -v ./...
 make lint      # golangci-lint run
 make swagger   # 重新生成 docs/（改了 handler 注解后必须跑）
+make legacy-inventory # 仅在 test 环境只读盘点旧 App 与 Namespace
 make clean
 ```
 
@@ -26,10 +27,10 @@ make clean
 ## 分层强制要求
 
 - **参数校验在 handler 层**：请求结构体用 `binding` tag（`binding:"required,min=0,max=10"`），`ShouldBindJSON` 失败即 `BadRequest` 返回。
-- **权限检查在 service 层**：所有资源操作必须校验归属，模式见 `internal/service/app.go`：
+- **权限检查在 service 层**：项目先校验 `Project.UserID`，应用再按 `project_id + app_id` 查询；Kubernetes 操作只使用已授权 Project 的 Namespace：
 
 ```go
-if app.UserID != userID {
+if project.UserID != userID {
     return errcode.New(errcode.ErrForbidden)
 }
 ```
@@ -41,7 +42,66 @@ if app.UserID != userID {
 每个 handler 方法带 swag 注解（`@Summary` / `@Tags` / `@Security Bearer` / `@Router`），格式参照 `internal/handler/app.go`。改注解后跑 `make swagger`。
 
 ## 测试现状
-**当前代码库已有 `internal/service/oauth2_test.go`，覆盖 OAuth2 state 生成与校验；其他业务层仍缺少测试**（技术债）。新增复杂业务逻辑（service 层分支/权限判断）建议补最小化表驱动测试，但不强制补历史欠账。有测试后用 `make test` 跑。
+当前已有 OAuth2、项目和应用 Service 的最小单元测试，以及项目嵌套路由测试。新增复杂业务逻辑（service 层分支/权限判断）应补最小回归测试，但不强制补历史欠账。有测试后用 `make test` 跑。
+
+## 场景：项目级资源归属
+
+### 1. Scope / Trigger
+
+- 新增或修改 Project API、项目内 App API、Project/App 数据模型或 Web 项目路由时适用。
+- 项目是用户、应用与 Kubernetes Namespace 之间唯一的归属边界；不得恢复用户级 Namespace 或扁平 App 路由。
+
+### 2. Signatures
+
+- Project API：`POST/GET /api/v1/projects`、`GET/DELETE /api/v1/projects/:project_id`。
+- App API：`/api/v1/projects/:project_id/apps` 及其 `/:id`、`/start`、`/stop`、`/restart`、`/logs` 子路由。
+- Service：所有 App 操作同时接收 `projectID` 与 `userID`；创建请求还必须包含 `ProjectID`。
+- Web：项目入口固定为 `/projects`，应用页面使用 `/projects/:projectId/apps...`。
+
+### 3. Contracts
+
+- handler 校验 `project_id`、`id` 为正整数，并校验请求体；service 校验 `Project.UserID == userID`。
+- App 必须以 `project_id + app_id` 查询，Kubernetes 操作只使用已授权 Project 保存的 Namespace。
+- 同一用户内 Project 名唯一；同一 Project 内 App 名唯一；App 的 `project_id` 非空且受外键约束。
+- App 创建在锁定 Project 的事务内写入未提交记录并创建 Kubernetes 资源；只有回调和事务提交都成功后记录才可见，提交失败必须幂等删除已创建资源。
+- 所有响应继续使用 `code`、`message`、`data`；旧 `/api/v1/apps` 不提供兼容入口。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 结果 |
+|---|---|
+| `project_id` / `id` 非正整数 | `ErrBadRequest` |
+| Project 不存在 | `ErrProjectNotFound` |
+| Project 属于其他用户 | `ErrForbidden` |
+| 用户内 Project 重名 | `ErrProjectExists` |
+| Project 仍含 App | `ErrProjectNotEmpty`，不得删除 Namespace 或记录 |
+| Project 内 App 重名 | `ErrAppExists` |
+| K8s 创建失败 | 回滚未提交 App，返回应用创建错误 |
+| K8s 创建成功但事务提交失败 | 删除 K8s 资源并返回错误；补偿失败时记录结构化错误并返回两次失败 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：用户通过项目嵌套路由创建 App，数据库保存非空 `project_id`，资源位于该 Project 的 Namespace。
+- Base：无 Project 用户只看到创建项目入口，不能调用扁平 App API。
+- Bad：仅按 App ID 查询后再校验用户，或从客户端/App 字段接受 Namespace，可能造成跨项目访问或资源漂移。
+
+### 6. Tests Required
+
+- 路由测试断言全部 App 路由含 `:project_id`，旧 `/api/v1/apps` 返回不存在。
+- Service 测试覆盖项目越权、错项目 App、项目内重名、非空项目删除和 K8s/数据库补偿失败。
+- Repository/MariaDB 集成测试断言 Project 行锁使 App 创建与项目删除串行，未提交 App 对其他事务不可见。
+- Web 测试断言项目 ID 在 API 与页面路由间完整传播，切换项目时不保留上一项目数据。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong：只按 App ID 查询，Namespace 归属无法由路径中的 Project 约束。
+app, err := repo.GetByID(appID)
+
+// Correct：先确认 Project 所有权，再在同一 Project 内查询 App。
+project, err := projects.GetByID(projectID)
+app, err := repo.GetByProjectAndID(project.ID, appID)
+```
 
 ## 场景：GitHub Actions Shell 静态检查一致性
 

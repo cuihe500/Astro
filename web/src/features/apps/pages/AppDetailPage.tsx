@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/Feedback";
 import { errorMessage } from "../../../lib/api";
+import { projectAppsPath } from "../../../lib/routes";
 import { deleteApp, getApp, getAppLogs, runLifecycleAction } from "../api";
 import { StatusBadge } from "../components/StatusBadge";
 import type { App, LifecycleAction } from "../types";
@@ -19,7 +20,7 @@ const ACTION_LABELS: Record<LifecycleAction, string> = {
 };
 
 export function AppDetailPage() {
-  const { id = "" } = useParams();
+  const { projectId = "", id = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const deleteDialog = useRef<HTMLDialogElement>(null);
@@ -39,25 +40,25 @@ export function AppDetailPage() {
     setLoading(true);
     setAppError("");
     try {
-      setApp(await getApp(id));
+      setApp(await getApp(projectId, id));
     } catch (requestError) {
       setAppError(errorMessage(requestError, "应用详情加载失败。"));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, projectId]);
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true);
     setLogsError("");
     try {
-      setLogs(await getAppLogs(id));
+      setLogs(await getAppLogs(projectId, id));
     } catch (requestError) {
       setLogsError(errorMessage(requestError, "日志加载失败。"));
     } finally {
       setLogsLoading(false);
     }
-  }, [id]);
+  }, [id, projectId]);
 
   useEffect(() => {
     // 首次进入页面时同步详情和日志，状态更新来自请求结果。
@@ -71,7 +72,7 @@ export function AppDetailPage() {
     setPendingAction(action);
     setFeedback(null);
     try {
-      await runLifecycleAction(app.id, action);
+      await runLifecycleAction(projectId, app.id, action);
       setFeedback({ message: `${ACTION_LABELS[action]}请求已提交。`, error: false });
       await loadApp();
     } catch (requestError) {
@@ -91,9 +92,9 @@ export function AppDetailPage() {
     setPendingAction("delete");
     setFeedback(null);
     try {
-      await deleteApp(app.id);
+      await deleteApp(projectId, app.id);
       deleteDialog.current?.close();
-      navigate("/apps", { replace: true, state: { message: "应用已删除。" } });
+      navigate(projectAppsPath(projectId), { replace: true, state: { message: "应用已删除。" } });
     } catch (requestError) {
       setFeedback({ message: errorMessage(requestError, "删除应用失败，请重试。"), error: true });
       setPendingAction(null);
@@ -104,7 +105,7 @@ export function AppDetailPage() {
   if (appError || !app) {
     return (
       <section className="page" aria-labelledby="detail-error-title">
-        <Link className="back-link" to="/apps"><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
+        <Link className="back-link" to={projectAppsPath(projectId)}><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
         <div className="sr-only" id="detail-error-title">应用详情</div>
         <ErrorState message={appError || "应用不存在。"} onRetry={() => void loadApp()} />
       </section>
@@ -116,7 +117,7 @@ export function AppDetailPage() {
 
   return (
     <section className="page" aria-labelledby="detail-title">
-      <Link className="back-link" to="/apps"><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
+      <Link className="back-link" to={projectAppsPath(projectId)}><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
       <header className="page-header detail-header">
         <div>
           <p className="eyebrow">应用详情</p>

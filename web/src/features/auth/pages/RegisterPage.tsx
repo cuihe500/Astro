@@ -2,6 +2,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { errorMessage } from "../../../lib/api";
+import { projectsPath } from "../../../lib/routes";
 import { login, register } from "../api";
 import { setSessionToken } from "../session";
 import { AuthLayout } from "./AuthLayout";
@@ -43,7 +44,7 @@ export function RegisterPage() {
       accountCreated = true;
       const session = await login(username.trim(), password);
       setSessionToken(session.token);
-      navigate("/apps", { replace: true });
+      navigate(projectsPath, { replace: true });
     } catch (error) {
       setFormError(
         accountCreated ? "账号已创建，但自动登录失败。请返回登录页重试。" : errorMessage(error, "注册失败，请重试。"),

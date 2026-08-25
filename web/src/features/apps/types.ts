@@ -4,8 +4,7 @@ export interface App {
   image: string;
   replicas: number;
   status: string;
-  user_id: number;
-  namespace: string;
+  project_id: number;
   created_at: string;
   updated_at: string;
 }

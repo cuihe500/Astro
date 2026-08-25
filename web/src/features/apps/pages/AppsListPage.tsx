@@ -1,8 +1,11 @@
-import { Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { EmptyState, ErrorState } from "../../../components/Feedback";
 import { errorMessage } from "../../../lib/api";
+import { appDetailPath, createAppPath, projectsPath } from "../../../lib/routes";
+import { getProject } from "../../projects/api";
+import type { Project } from "../../projects/types";
 import { getApps } from "../api";
 import { StatusBadge } from "../components/StatusBadge";
 import type { App } from "../types";
@@ -13,23 +16,29 @@ function formatDate(value: string): string {
 }
 
 export function AppsListPage() {
+  const { projectId = "" } = useParams();
   const location = useLocation();
   const navigationMessage = (location.state as { message?: string } | null)?.message;
   const [apps, setApps] = useState<App[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadApps = useCallback(async () => {
     setLoading(true);
     setError("");
+    setProject(null);
+    setApps([]);
     try {
-      setApps(await getApps());
+      const [nextProject, nextApps] = await Promise.all([getProject(projectId), getApps(projectId)]);
+      setProject(nextProject);
+      setApps(nextApps);
     } catch (requestError) {
       setError(errorMessage(requestError, "应用列表加载失败。"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     // 首次进入页面时同步远端数据，状态更新来自请求结果。
@@ -39,10 +48,11 @@ export function AppsListPage() {
 
   return (
     <section className="page" aria-labelledby="apps-title">
+      <Link className="back-link" to={projectsPath}><ArrowLeft size={17} aria-hidden="true" />返回项目列表</Link>
       <header className="page-header">
         <div>
-          <p className="eyebrow">工作台</p>
-          <h1 id="apps-title">我的应用</h1>
+          <p className="eyebrow">{project?.name ?? "项目"}</p>
+          <h1 id="apps-title">项目应用</h1>
         </div>
         <div className="page-actions">
           <button
@@ -55,7 +65,7 @@ export function AppsListPage() {
           >
             <RefreshCw className={loading ? "spin" : undefined} size={19} aria-hidden="true" />
           </button>
-          <Link className="button button-primary" to="/apps/new">
+          <Link className="button button-primary" to={createAppPath(projectId)}>
             <Plus size={18} aria-hidden="true" />
             创建应用
           </Link>
@@ -68,7 +78,7 @@ export function AppsListPage() {
       {loading && apps.length === 0 ? <div className="list-loading" role="status">正在加载应用...</div> : null}
       {!loading && !error && apps.length === 0 ? (
         <EmptyState title="还没有应用">
-          <Link className="button button-primary" to="/apps/new">
+          <Link className="button button-primary" to={createAppPath(projectId)}>
             <Plus size={18} aria-hidden="true" />
             创建第一个应用
           </Link>
@@ -84,7 +94,7 @@ export function AppsListPage() {
           <ul className="app-list">
             {apps.map((app) => (
               <li key={app.id}>
-                <Link className="app-row" to={`/apps/${app.id}`}>
+                <Link className="app-row" to={appDetailPath(projectId, app.id)}>
                   <strong>{app.name}</strong>
                   <span className="app-image" title={app.image}>{app.image}</span>
                   <span><StatusBadge status={app.status} /></span>

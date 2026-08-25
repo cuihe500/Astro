@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "遵循现有handler-service-repository-k8s分层与领域文件布局"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "落实GORM模型约束、参数化查询与AutoMigrate边界"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "保持错误码分段、service转换和统一响应"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "遵守权限校验、测试、Swagger和Makefile命令要求"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "核对数据库API与Web项目上下文的端到端数据流"}

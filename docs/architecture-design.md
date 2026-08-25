@@ -1,8 +1,8 @@
 # Astro 容器即服务平台 - 架构设计文档
 
-> 版本：v1.0
-> 日期：2025-12-11
-> 状态：设计阶段
+> 版本：v1.1
+> 日期：2026-08-24
+> 状态：MVP 实施中
 
 ---
 
@@ -53,7 +53,7 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
 - ✅ 应用创建/删除
 - ✅ 应用启动/停止/重启
 - ✅ 应用日志查看
-- ✅ 多租户隔离（每个用户独立命名空间）
+- ✅ 项目级多租户隔离（每个项目独立命名空间）
 
 **第二阶段（未来扩展）** - 状态：🔄 规划中
 - 🔄 应用模板市场
@@ -66,7 +66,7 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
 
 ## 1.5 开发进度 TODO
 
-> 最后更新：2025-12-11
+> 最后更新：2026-08-24
 
 ### 基础设施层 ✅ 已完成
 - [x] `pkg/config` - 配置加载（Viper）
@@ -89,8 +89,15 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
 - [x] `internal/service/app.go` - AppService（CRUD、启停、日志）
 - [x] `internal/handler/app.go` - AppHandler（8 个 API）
 
+### 项目模块 ✅ 已完成
+- [x] `internal/model/model.go` - Project 数据模型及 App 项目外键
+- [x] `internal/repository/project.go` - ProjectRepository
+- [x] `internal/service/project.go` - ProjectService（创建、查询、空项目删除）
+- [x] `internal/handler/project.go` - ProjectHandler（4 个 API）
+- [x] `web/src/features/projects/` - 项目列表、创建及删除界面
+
 ### 待开发功能 📋 TODO
-- [ ] 前端 Web 界面
+- [x] 前端 Web 界面
 - [ ] 应用模板市场功能
 - [ ] 资源监控（Prometheus 集成）
 - [ ] 持久化存储管理（PVC）
@@ -167,11 +174,11 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
 │               │  └────────┬─────────┘  └─────────────────┘
 │  ┌─────────┐  │           │
 │  │ users   │  │           │
-│  │ apps    │  │           ▼
-│  └─────────┘  │  ┌───────────────────────────────────┐
-└───────────────┘  │  Kubernetes 集群                   │
-                   │  ┌─────────────────────────────┐  │
-                   │  │  Namespace: astro-user-1    │  │
+│  │ projects│  │           ▼
+│  │ apps    │  │  ┌───────────────────────────────────┐
+│  └─────────┘  │  │  Kubernetes 集群                   │
+└───────────────┘  │  ┌─────────────────────────────┐  │
+                   │  │  Namespace: astro-project-… │  │
                    │  │  ┌──────────┐  ┌─────────┐  │  │
                    │  │  │Deployment│  │ Service │  │  │
                    │  │  └────┬─────┘  └─────────┘  │  │
@@ -181,7 +188,7 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
                    │  │  └─────────┘  └─────────┘  │  │
                    │  └─────────────────────────────┘  │
                    │  ┌─────────────────────────────┐  │
-                   │  │  Namespace: astro-user-2    │  │
+                   │  │  Namespace: astro-project-… │  │
                    │  │  ...                         │  │
                    │  └─────────────────────────────┘  │
                    └───────────────────────────────────┘
@@ -228,6 +235,8 @@ Astro 是一个面向 C 端用户的容器即服务（CaaS）平台，目标是�
 **设计亮点**：
 ```go
 type AppAdapter interface {
+    EnsureNamespace(ctx context.Context, namespace string) error
+    DeleteNamespace(ctx context.Context, namespace string) error
     CreateApp(ctx context.Context, spec AppSpec) error
     DeleteApp(ctx context.Context, name, namespace string) error
     ScaleApp(ctx context.Context, name, namespace string, replicas int32) error
@@ -380,26 +389,27 @@ Service → OperatorAdapter → 自定义 CRD → Operator Controller → Kubern
 ┌─────────────────────────────────────────────────────────────┐
 │  2. Service 层处理                                           │
 │     ┌─────────────────────────────────────────────────┐     │
-│     │ 2.1 检查 K8s 客户端是否可用                      │     │
+│     │ 2.1 校验项目归属                                │     │
 │     └────────────┬────────────────────────────────────┘     │
 │                  │                                           │
 │     ┌────────────▼────────────────────────────────────┐     │
-│     │ 2.2 检查应用名是否重复（同一用户下）            │     │
+│     │ 2.2 检查应用名是否重复（同一项目内）            │     │
 │     └────────────┬────────────────────────────────────┘     │
 │                  │                                           │
 │     ┌────────────▼────────────────────────────────────┐     │
-│     │ 2.3 构建命名空间: astro-user-{user_id}          │     │
-│     │     构建 K8s 名称: {app_name}-u{user_id}         │     │
+│     │ 2.3 开启事务并锁定项目，读取项目 Namespace       │     │
+│     │     写入尚未提交的非空 project_id 应用记录       │     │
 │     └────────────┬────────────────────────────────────┘     │
 │                  │                                           │
 │     ┌────────────▼────────────────────────────────────┐     │
-│     │ 2.4 写入数据库（status=pending）                 │     │
-│     └────────────┬────────────────────────────────────┘     │
-│                  │                                           │
-│     ┌────────────▼────────────────────────────────────┐     │
-│     │ 2.5 调用 Adapter.CreateApp()                     │     │
+│     │ 2.4 在事务回调内调用 Adapter.CreateApp()         │     │
 │     │     - 创建 Deployment                            │     │
 │     │     - 创建 Service（如果有端口）                 │     │
+│     └────────────┬────────────────────────────────────┘     │
+│                  │                                           │
+│     ┌────────────▼────────────────────────────────────┐     │
+│     │ 2.5 提交事务，应用记录此时才对其他请求可见       │     │
+│     │     提交失败则删除已创建的 Kubernetes 资源       │     │
 │     └────────────┬────────────────────────────────────┘     │
 │                  │                                           │
 │     ┌────────────▼────────────────────────────────────┐     │
@@ -467,20 +477,22 @@ Service → OperatorAdapter → 自定义 CRD → Operator Controller → Kubern
 └─────────────────────────────────────────────────────────────┘
 ```
 
+Kubernetes 创建失败会回滚未提交的 App 记录。由于失败请求也可能已创建部分资源，Service 从调用开始即在事务失败时使用同名、同 Namespace 的幂等删除进行补偿；资源不存在时 NotFound 视为成功。这样并发删除无法观察到只有数据库记录、尚无 Kubernetes 资源的中间状态。
+
 #### 4.2.3 多租户隔离设计
 
 **命名空间策略**：
-- 每个用户分配独立命名空间：`astro-user-{user_id}`
-- 例如：用户 ID 为 123 → 命名空间 `astro-user-123`
+- 每个项目分配稳定的独立命名空间：`astro-project-<UUID>`。
+- 项目内应用共享该 Namespace；创建项目时建立，删除空项目时删除。
 
 **资源命名策略**：
-- 应用名格式：`{app_name}-u{user_id}`
-- 例如：用户 123 创建 "nginx" → K8s 资源名 `nginx-u123`
+- Deployment 与可选 Service 使用应用名。
+- 应用名在同一项目内唯一，不同项目可重名。
 
 **好处**：
-- ✅ 避免命名冲突（不同用户可以创建同名应用）
+- ✅ 避免命名冲突（不同项目可以创建同名应用）
 - ✅ 资源隔离（网络策略、资源配额）
-- ✅ 便于清理（删除用户时直接删除命名空间）
+- ✅ 便于清理（仅空项目可删除，删除时同步删除 Namespace）
 
 #### 4.2.4 状态同步机制
 
@@ -589,155 +601,28 @@ POST /api/v1/login
 }
 ```
 
-### 5.3 应用相关接口
+### 5.3 项目与应用接口
 
-#### 5.3.1 创建应用
+所有接口都要求 `Authorization: Bearer {token}`，并在 Service 层校验项目所有权。
 
-```
-POST /api/v1/apps
-Authorization: Bearer {token}
-```
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/v1/projects` | 创建项目及独立 Namespace |
+| GET | `/api/v1/projects` | 获取当前用户的项目列表 |
+| GET | `/api/v1/projects/{project_id}` | 获取项目详情 |
+| DELETE | `/api/v1/projects/{project_id}` | 删除空项目及其 Namespace |
+| POST | `/api/v1/projects/{project_id}/apps` | 在项目内创建应用 |
+| GET | `/api/v1/projects/{project_id}/apps` | 获取项目应用列表 |
+| GET | `/api/v1/projects/{project_id}/apps/{id}` | 获取应用详情 |
+| DELETE | `/api/v1/projects/{project_id}/apps/{id}` | 删除应用 |
+| POST | `/api/v1/projects/{project_id}/apps/{id}/start` | 启动应用 |
+| POST | `/api/v1/projects/{project_id}/apps/{id}/stop` | 停止应用 |
+| POST | `/api/v1/projects/{project_id}/apps/{id}/restart` | 重启应用 |
+| GET | `/api/v1/projects/{project_id}/apps/{id}/logs?lines=100` | 获取最近 1-1000 行日志 |
 
-**请求参数**：
-```json
-{
-  "name": "my-nginx",          // 必填，应用名称
-  "image": "nginx:latest",     // 必填，镜像地址
-  "replicas": 2,               // 必填，副本数（0-10）
-  "port": 80                   // 可选，容器端口（0表示不暴露）
-}
-```
+项目创建请求只包含 `name`。应用创建请求包含 `name`、`image`、`replicas` 与可选 `port`；项目由路径参数确定，应用响应使用 `project_id` 表示唯一归属，不再复制用户 ID 或 Namespace。
 
-**成功响应**：
-```json
-{
-  "code": 0,
-  "message": "创建成功",
-  "data": {
-    "id": 1,
-    "name": "my-nginx",
-    "image": "nginx:latest",
-    "replicas": 2,
-    "status": "pending",
-    "user_id": 123,
-    "namespace": "astro-user-123",
-    "created_at": "2025-12-11T10:00:00Z",
-    "updated_at": "2025-12-11T10:00:00Z"
-  }
-}
-```
-
-#### 5.3.2 查看应用列表
-
-```
-GET /api/v1/apps
-Authorization: Bearer {token}
-```
-
-**成功响应**：
-```json
-{
-  "code": 0,
-  "message": "成功",
-  "data": [
-    {
-      "id": 1,
-      "name": "my-nginx",
-      "image": "nginx:latest",
-      "replicas": 2,
-      "status": "running",
-      "user_id": 123,
-      "namespace": "astro-user-123",
-      "created_at": "2025-12-11T10:00:00Z",
-      "updated_at": "2025-12-11T10:05:00Z"
-    }
-  ]
-}
-```
-
-#### 5.3.3 查看应用详情
-
-```
-GET /api/v1/apps/{id}
-Authorization: Bearer {token}
-```
-
-**成功响应**：
-```json
-{
-  "code": 0,
-  "message": "成功",
-  "data": {
-    "id": 1,
-    "name": "my-nginx",
-    "image": "nginx:latest",
-    "replicas": 2,
-    "status": "running",
-    "user_id": 123,
-    "namespace": "astro-user-123",
-    "created_at": "2025-12-11T10:00:00Z",
-    "updated_at": "2025-12-11T10:05:00Z"
-  }
-}
-```
-
-#### 5.3.4 停止应用
-
-```
-POST /api/v1/apps/{id}/stop
-Authorization: Bearer {token}
-```
-
-**成功响应**：
-```json
-{
-  "code": 0,
-  "message": "停止成功",
-  "data": null
-}
-```
-
-#### 5.3.5 启动应用
-
-```
-POST /api/v1/apps/{id}/start
-Authorization: Bearer {token}
-```
-
-#### 5.3.6 重启应用
-
-```
-POST /api/v1/apps/{id}/restart
-Authorization: Bearer {token}
-```
-
-#### 5.3.7 删除应用
-
-```
-DELETE /api/v1/apps/{id}
-Authorization: Bearer {token}
-```
-
-#### 5.3.8 查看应用日志
-
-```
-GET /api/v1/apps/{id}/logs?lines=100
-Authorization: Bearer {token}
-```
-
-**查询参数**：
-- `lines`: 日志行数（默认 100）
-
-**成功响应**：
-```json
-{
-  "code": 0,
-  "message": "成功",
-  "data": {
-    "logs": "2025-12-11 10:00:00 [INFO] Server started\n2025-12-11 10:00:01 [INFO] Ready to accept connections\n..."
-  }
-}
-```
+Web 入口与 API 保持相同层级：`/projects` → `/projects/:projectId/apps` → 应用详情。未创建项目的用户只能看到创建项目引导。
 
 ### 5.4 错误码定义
 
@@ -752,10 +637,15 @@ Authorization: Bearer {token}
 | 21001 | 应用不存在 | 200 |
 | 21002 | 应用已存在 | 200 |
 | 21003 | 创建应用失败 | 200 |
+| 22001 | 项目不存在 | 200 |
+| 22002 | 项目已存在 | 200 |
+| 22003 | 项目仍包含应用 | 200 |
+| 22004 | 创建项目失败 | 200 |
 | 30001 | 服务器内部错误 | 200 |
 | 30002 | 数据库错误 | 200 |
 | 30003 | K8s 操作错误 | 200 |
 | 30004 | K8s 连接失败 | 200 |
+| 30005 | K8s 操作失败 | 200 |
 
 **注意**：所有错误都返回 HTTP 200，通过 `code` 字段区分成功/失败。
 
@@ -775,7 +665,7 @@ CREATE TABLE users (
   status        TINYINT DEFAULT 1 COMMENT '状态：1-正常，0-禁用',
   created_at    DATETIME NOT NULL COMMENT '创建时间',
   updated_at    DATETIME NOT NULL COMMENT '更新时间',
-  deleted_at    DATETIME COMMENT '删除时间（软删除）',
+  deleted_at    DATETIME COMMENT 'GORM 基础字段；业务删除使用硬删除',
 
   INDEX idx_username (username),
   INDEX idx_email (email),
@@ -788,7 +678,25 @@ CREATE TABLE users (
 - `password`: bcrypt 加密后的密码（60 字符）
 - `deleted_at`: 软删除标记（GORM 自动处理）
 
-### 6.2 应用表（apps）
+### 6.2 项目表（projects）
+
+```sql
+CREATE TABLE projects (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(64) NOT NULL COMMENT '项目名称',
+  user_id       INT UNSIGNED NOT NULL COMMENT '所属用户ID',
+  namespace     VARCHAR(63) UNIQUE NOT NULL COMMENT 'K8s命名空间',
+  created_at    DATETIME NOT NULL,
+  updated_at    DATETIME NOT NULL,
+  deleted_at    DATETIME,
+  UNIQUE KEY idx_projects_user_name (name, user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目表';
+```
+
+项目名在用户内唯一；Namespace 使用 `astro-project-<UUID>`，全局唯一且不随项目名称变化。
+
+### 6.3 应用表（apps）
 
 ```sql
 CREATE TABLE apps (
@@ -797,24 +705,21 @@ CREATE TABLE apps (
   image         VARCHAR(256) NOT NULL COMMENT '镜像地址',
   replicas      INT DEFAULT 1 COMMENT '副本数',
   status        VARCHAR(32) DEFAULT 'stopped' COMMENT '状态：pending/running/stopped/starting/restarting/unknown',
-  user_id       INT UNSIGNED NOT NULL COMMENT '所属用户ID',
-  namespace     VARCHAR(64) NOT NULL COMMENT 'K8s命名空间',
+  project_id    INT UNSIGNED NOT NULL COMMENT '所属项目ID',
   created_at    DATETIME NOT NULL COMMENT '创建时间',
   updated_at    DATETIME NOT NULL COMMENT '更新时间',
   deleted_at    DATETIME COMMENT '删除时间（软删除）',
 
-  INDEX idx_user_id (user_id),
-  INDEX idx_name (name),
-  INDEX idx_status (status),
-  UNIQUE KEY uk_user_name (user_id, name, deleted_at)
+  UNIQUE KEY idx_apps_project_name (name, project_id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用表';
 ```
 
 **字段说明**：
-- `namespace`: 存储 K8s 命名空间，便于查询
-- `uk_user_name`: 同一用户下应用名唯一（软删除后可以重用）
+- `project_id`: 必填外键，应用的用户归属和 Namespace 均通过项目确定。
+- `idx_apps_project_name`: 同一项目内应用名唯一；应用删除使用硬删除，因此名称可复用。
 
-### 6.3 ER 图
+### 6.4 ER 图
 
 ```
 ┌───────────────────┐
@@ -832,24 +737,40 @@ CREATE TABLE apps (
 └─────────┬─────────┘
           │ 1
           │
-          │ has many
+          │ owns
           │
           │ N
 ┌─────────▼─────────┐
-│      apps         │
+│     projects      │
 ├───────────────────┤
 │ id (PK)           │
-│ name              │
-│ image             │
-│ replicas          │
-│ status            │
 │ user_id (FK)      │
-│ namespace         │
+│ name (UK/user)    │
+│ namespace (UK)    │
 │ created_at        │
 │ updated_at        │
 │ deleted_at        │
+└─────────┬─────────┘
+          │ 1
+          │ contains
+          │ N
+┌─────────▼─────────┐
+│       apps        │
+├───────────────────┤
+│ id (PK)           │
+│ project_id (FK)   │
+│ name (UK/project) │
+│ image             │
+│ replicas          │
+│ status            │
 └───────────────────┘
 ```
+
+### 6.5 旧模型切换门禁
+
+切换前在测试环境运行 `make legacy-inventory`，只读列出旧 `apps` 活动记录以及带 `managed-by=astro` 标签的 `astro-user-*` Namespace。该命令要求 `ASTRO_RUNTIME_ENV=test`、`ASTRO_DATABASE_HOST/PORT/USER/PASSWORD/DBNAME` 与 `ASTRO_KUBERNETES_KUBECONFIG`，只执行 SQL `SELECT` 与 `kubectl get`；删除操作必须根据清单另行确认后逐项执行。
+
+服务启动时仅识别同时包含 `user_id`、`namespace` 且不包含 `project_id` 的旧 `apps` 表。存在活动 App 时拒绝启动；表为空时删除旧表，再由 `AutoMigrate` 建立带必填项目外键的新表。不会自动创建默认项目，也不会迁移旧应用。
 
 ---
 
@@ -1084,16 +1005,13 @@ subjects:
 
 **资源所有权检查**：
 ```go
-// 示例：删除应用
-func (s *AppService) DeleteApp(appID, userID uint) error {
-    app, _ := s.repo.GetAppByID(appID)
-
-    // 检查资源是否属于当前用户
-    if app.UserID != userID {
-        return errcode.New(errcode.ErrForbidden)
+// 所有应用操作先验证项目归属，再按 project_id + app_id 查询应用。
+func (s *AppService) DeleteApp(ctx context.Context, projectID, appID, userID uint) error {
+    project, err := s.getOwnedProject(projectID, userID)
+    if err != nil {
+        return err
     }
-
-    // 执行删除
+    // 后续只使用 project.Namespace 定位 Kubernetes 资源。
     ...
 }
 ```
@@ -1209,12 +1127,12 @@ spec:
 #### 8.4.2 多租户网络隔离
 
 ```yaml
-# 每个用户的命名空间都有独立的网络策略
+# 每个项目的命名空间都有独立的网络策略
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all
-  namespace: astro-user-123
+  namespace: astro-project-550e8400-e29b-41d4-a716-446655440000
 spec:
   podSelector: {}
   policyTypes:
@@ -1225,7 +1143,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-same-namespace
-  namespace: astro-user-123
+  namespace: astro-project-550e8400-e29b-41d4-a716-446655440000
 spec:
   podSelector: {}
   policyTypes:

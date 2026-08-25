@@ -1,7 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { errorMessage } from "../../../lib/api";
+import { appDetailPath, projectAppsPath } from "../../../lib/routes";
 import { createApp } from "../api";
 
 interface CreateErrors {
@@ -14,6 +15,7 @@ interface CreateErrors {
 const APP_NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 export function CreateAppPage() {
+  const { projectId = "" } = useParams();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
@@ -51,8 +53,8 @@ export function CreateAppPage() {
     setSubmitting(true);
     setFormError("");
     try {
-      const app = await createApp({ name: trimmedName, image: trimmedImage, replicas: replicasNumber, port: portNumber });
-      navigate(`/apps/${app.id}`, { replace: true, state: { message: "应用已创建。" } });
+      const app = await createApp(projectId, { name: trimmedName, image: trimmedImage, replicas: replicasNumber, port: portNumber });
+      navigate(appDetailPath(projectId, app.id), { replace: true, state: { message: "应用已创建。" } });
     } catch (requestError) {
       setFormError(errorMessage(requestError, "创建应用失败，请重试。"));
       setSubmitting(false);
@@ -61,7 +63,7 @@ export function CreateAppPage() {
 
   return (
     <section className="page page-narrow" aria-labelledby="create-title">
-      <Link className="back-link" to="/apps"><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
+      <Link className="back-link" to={projectAppsPath(projectId)}><ArrowLeft size={17} aria-hidden="true" />返回应用列表</Link>
       <header className="page-header">
         <div>
           <p className="eyebrow">新应用</p>
@@ -142,7 +144,7 @@ export function CreateAppPage() {
         </div>
         {formError ? <div className="feedback feedback-error" role="alert">{formError}</div> : null}
         <div className="form-actions">
-          <Link className="button button-secondary" to="/apps">取消</Link>
+          <Link className="button button-secondary" to={projectAppsPath(projectId)}>取消</Link>
           <button className="button button-primary" type="submit" disabled={submitting}>
             {submitting ? "正在创建" : "创建应用"}
           </button>

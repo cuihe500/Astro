@@ -1,0 +1,29 @@
+{
+  "id": "user-project-resource-ownership",
+  "name": "user-project-resource-ownership",
+  "title": "引入用户项目与项目级资源归属",
+  "description": "",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cuihe500",
+  "assignee": "cuihe500",
+  "createdAt": "2026-08-24",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "github_issue": "https://github.com/cuihe500/Astro/issues/3",
+    "github_project": "https://github.com/users/cuihe500/projects/6"
+  }
+}
