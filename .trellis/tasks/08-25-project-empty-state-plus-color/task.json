@@ -1,0 +1,29 @@
+{
+  "id": "project-empty-state-plus-color",
+  "name": "project-empty-state-plus-color",
+  "title": "修复项目空状态按钮加号颜色",
+  "description": "修复共享空状态样式误覆盖主按钮加号颜色的问题",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P3",
+  "creator": "cuihe500",
+  "assignee": "cuihe500",
+  "createdAt": "2026-08-25",
+  "completedAt": null,
+  "branch": "fix/project-empty-state-plus-color",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "github_issue": "https://github.com/cuihe500/Astro/issues/5",
+    "github_project": "https://github.com/users/cuihe500/projects/6"
+  }
+}
