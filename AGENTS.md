@@ -164,3 +164,4 @@ Astro 是一个面向 C 端用户的容器即服务 (CaaS) 平台，提供简单
 30. **完成定义**: PR 合并且验收通过后才能关闭 Issue、将 Project 改为 `Done` 并归档 Trellis；`task.py finish` 仅清除会话指针，不代表完成
 31. **例外处理**: 紧急修复只能由用户明确授权，且最迟在 PR 审查或合并前补齐关联；安全漏洞必须使用 Security Advisory 或受限私有工作项，不得公开敏感信息
 32. **命令入口**: 日常 GitHub 与 Trellis 操作分别使用 Makefile 的 `github` 和 `trellis` 等目标，禁止直接调用 `gh` 或 `.trellis/scripts/*.py`；一次性 Project 初始化可在明确授权下例外执行
+33. **本机测试配置**: 本机测试环境信息统一存放在已被 Git 忽略的 `configs/config.local.yaml`；AI 可读取该文件用于本机测试，但不得提交或复制到受跟踪文件，也不得输出其中的任何具体环境值（包括容器名、端口、Kubernetes context 与凭据）
