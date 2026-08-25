@@ -3,7 +3,7 @@
   "name": "astro-host-control-plane",
   "title": "建立 Astro 主机部署控制面",
   "description": "在 /root/base-workspace 建立一次性 Astro 测试/生产运行控制面：Compose、OpenResty、DNS/TLS、数据库/网络、受限部署与回滚入口、运行文档；后续仅由基础设施项目维护。",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "cuihe500",
   "assignee": "cuihe500",
   "createdAt": "2026-08-20",
-  "completedAt": null,
+  "completedAt": "2026-08-25",
   "branch": null,
   "base_branch": "main",
   "worktree_path": null,
@@ -22,5 +22,7 @@
   "parent": "08-20-cicd-test-production-deploy",
   "relatedFiles": [],
   "notes": "2026-08-21 已保存可恢复主机检查点：/root/base-workspace/backup/applications/astro/20260821T035452Z-host-control-plane-final-checkpoint/；MANIFEST.sha256 已验证。首个有效 ARM64 GHCR digest 发布前，真实测试部署、成功 state 写入与故障 digest 自动回滚演练仍待后续流水线任务完成后执行。生产继续由 enabled=false 与缺少独立 kubeconfig 双重阻止。",
-  "meta": {}
+  "meta": {
+    "outcome": "cancelled"
+  }
 }
