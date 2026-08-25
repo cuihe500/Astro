@@ -189,7 +189,7 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 }
 .page-state p { margin: 0; }
 .page-state-error { color: var(--color-danger); border-style: solid; background: var(--color-danger-soft); }
-.page-state-empty svg { width: 32px; height: 32px; color: var(--color-info); }
+.page-state-empty > svg { width: 32px; height: 32px; color: var(--color-info); }
 .page-state-empty h2 { margin: 0; color: var(--color-text); font-size: 19px; }
 .list-loading { padding: 70px 0; color: var(--color-muted); text-align: center; }
 
