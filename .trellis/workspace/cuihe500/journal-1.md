@@ -41,3 +41,38 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: 完成项目级资源归属交付
+
+**Date**: 2026-08-25
+**Task**: 完成项目级资源归属交付
+**Branch**: `main`
+
+### Summary
+
+PR #4 已合并，Issue #3 已关闭，main 流水线成功构建 ARM64 镜像并部署测试环境。
+
+### Main Changes
+
+- 完成项目级资源归属、补偿修复与测试覆盖
+- 记录本机测试配置的安全发现约定
+- 创建并合并 PR #4，归档 Trellis 任务
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `00167e6` | (see git log) |
+| `a18f638` | (see git log) |
+| `d0e369f` | (see git log) |
+| `79ea4b4` | (see git log) |
+
+### Testing
+
+- [OK] PR CI 校验通过
+- [OK] main 发布流水线及 test deployment 成功
+
+### Status
+
+[OK] **Completed**
