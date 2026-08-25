@@ -103,3 +103,25 @@ PR #4 已合并，Issue #3 已关闭，main 流水线成功构建 ARM64 镜像�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 5: 修复空状态按钮加号颜色
+
+**Date**: 2026-08-25
+**Task**: 修复空状态按钮加号颜色
+**Branch**: `main`
+
+### Summary
+
+收窄空状态 SVG 选择器，使创建按钮加号继承白色；完成前端校验、PR #6 合并、Issue #5 关闭并归档任务。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1b82c18` | (see git log) |
+| `07061c4` | (see git log) |
+
+### Status
+
+[OK] **Completed**

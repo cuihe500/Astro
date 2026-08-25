@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 4
+- **Total Sessions**: 5
 - **Last Active**: 2026-08-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~105 | Active |
+| `journal-1.md` | ~127 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 5 | 2026-08-25 | 修复空状态按钮加号颜色 | `1b82c18`, `07061c4` | `main` |
 | 4 | 2026-08-25 | 归档全部存量 Trellis 任务 | - | `main` |
 | 3 | 2026-08-25 | 完成项目级资源归属交付 | `00167e6`, `a18f638`, `d0e369f`, `79ea4b4` | `main` |
 | 2 | 2026-08-24 | 建立 GitHub 与 Trellis 工作治理流程 | `420d6e3`, `2c4a0d1`, `fddc315`, `a2b6c10`, `e9c5fb7` | `main` |
