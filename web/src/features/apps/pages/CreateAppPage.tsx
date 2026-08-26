@@ -1,9 +1,11 @@
 import { ArrowLeft } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { errorMessage } from "../../../lib/api";
 import { appDetailPath, projectAppsPath } from "../../../lib/routes";
 import { createApp } from "../api";
+import { buildAppConfig, emptyAppConfigDraft } from "../config";
+import { AppConfigFields } from "../components/AppConfigFields";
 
 interface CreateErrors {
   name?: string;
@@ -21,19 +23,28 @@ export function CreateAppPage() {
   const [image, setImage] = useState("");
   const [replicas, setReplicas] = useState("1");
   const [port, setPort] = useState("");
+  const [configDraft, setConfigDraft] = useState(emptyAppConfigDraft);
   const [errors, setErrors] = useState<CreateErrors>({});
+  const [configErrors, setConfigErrors] = useState<Record<string, string>>({});
+  const [firstErrorID, setFirstErrorID] = useState("");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const errorSummary = useRef<HTMLDivElement>(null);
+  const serverError = useRef<HTMLDivElement>(null);
+  const advancedDetails = useRef<HTMLDetailsElement>(null);
 
   async function submitApp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+	setFirstErrorID("");
 
     const trimmedName = name.trim();
     const trimmedImage = image.trim();
     const replicasNumber = Number(replicas);
     const portNumber = port === "" ? 0 : Number(port);
     const nextErrors: CreateErrors = {};
+    const builtConfig = buildAppConfig(configDraft);
+    const nextConfigErrors = { ...builtConfig.errors };
 
     if (!trimmedName) nextErrors.name = "请输入应用名称。";
     else if (trimmedName.length > 63 || !APP_NAME_PATTERN.test(trimmedName)) {
@@ -46,18 +57,34 @@ export function CreateAppPage() {
     if (port !== "" && (!Number.isInteger(portNumber) || portNumber < 1 || portNumber > 65535)) {
       nextErrors.port = "端口必须是 1-65535 的整数。";
     }
+	if (port !== "" && builtConfig.config?.ports?.length) {
+		nextErrors.port = "兼容端口不能与高级多端口同时填写。";
+		nextConfigErrors.ports = "高级多端口不能与上方兼容端口同时填写。";
+	}
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+	setConfigErrors(nextConfigErrors);
+	const errorKeys = [...Object.keys(nextErrors), ...Object.keys(nextConfigErrors)];
+	if (errorKeys.length > 0) {
+		if (Object.keys(nextConfigErrors).length > 0 && advancedDetails.current) advancedDetails.current.open = true;
+		setFirstErrorID(errorID(errorKeys[0], configDraft));
+		requestAnimationFrame(() => errorSummary.current?.focus());
+		return;
+	}
 
     setSubmitting(true);
     setFormError("");
     try {
-      const app = await createApp(projectId, { name: trimmedName, image: trimmedImage, replicas: replicasNumber, port: portNumber });
+		const app = await createApp(projectId, {
+			name: trimmedName, image: trimmedImage, replicas: replicasNumber,
+			...(port === "" ? {} : { port: portNumber }),
+			...(builtConfig.config ? { config: builtConfig.config } : {}),
+		});
       navigate(appDetailPath(projectId, app.id), { replace: true, state: { message: "应用已创建。" } });
     } catch (requestError) {
       setFormError(errorMessage(requestError, "创建应用失败，请重试。"));
       setSubmitting(false);
+		requestAnimationFrame(() => serverError.current?.focus());
     }
   }
 
@@ -72,6 +99,7 @@ export function CreateAppPage() {
       </header>
 
       <form className="form-stack create-form" onSubmit={submitApp} noValidate>
+		{firstErrorID ? <div className="feedback feedback-error" role="alert" tabIndex={-1} ref={errorSummary}>请检查标记的字段。<a href={`#${firstErrorID}`}>定位第一个错误</a></div> : null}
         <div className="field">
           <label htmlFor="app-name">应用名称</label>
           <input
@@ -142,7 +170,8 @@ export function CreateAppPage() {
             {errors.port ? <p className="field-error" id="app-port-error">{errors.port}</p> : null}
           </div>
         </div>
-        {formError ? <div className="feedback feedback-error" role="alert">{formError}</div> : null}
+		<AppConfigFields draft={configDraft} errors={configErrors} detailsRef={advancedDetails} onChange={setConfigDraft} />
+		{formError ? <div className="feedback feedback-error" role="alert" tabIndex={-1} ref={serverError}>{formError}</div> : null}
         <div className="form-actions">
           <Link className="button button-secondary" to={projectAppsPath(projectId)}>取消</Link>
           <button className="button button-primary" type="submit" disabled={submitting}>
@@ -152,4 +181,25 @@ export function CreateAppPage() {
       </form>
     </section>
   );
+}
+
+function errorID(key: string, draft: ReturnType<typeof emptyAppConfigDraft>): string {
+	const basic: Record<string, string> = { name: "app-name", image: "app-image", replicas: "app-replicas", port: "app-port" };
+	if (basic[key]) return basic[key];
+	const direct: Record<string, string> = {
+		command: "config-command", args: "config-args", workingDir: "config-working-dir",
+		requestCPU: "config-requestCPU", requestMemory: "config-requestMemory", limitCPU: "config-limitCPU", limitMemory: "config-limitMemory",
+		startupProbe: "config-startup-probe-type", readinessProbe: "config-readiness-probe-type", livenessProbe: "config-liveness-probe-type",
+		runAsUser: "config-runAsUser", runAsGroup: "config-runAsGroup", fsGroup: "config-fsGroup",
+		terminationGracePeriodSeconds: "config-termination", dropCapabilities: "config-drop-capabilities", imagePullSecrets: "config-image-pull-secrets",
+	};
+	if (direct[key]) return direct[key];
+	const [collection, indexText] = key.split(".");
+	const index = Number(indexText);
+	if (collection === "env" && draft.env[index]) return `env-${draft.env[index].id}-name`;
+	if (collection === "envFrom" && draft.envFrom[index]) return `env-from-${draft.envFrom[index].id}-name`;
+	if (collection === "ports" && draft.ports[index]) return `port-${draft.ports[index].id}-name`;
+	if (collection === "volumes" && draft.volumes[index]) return `volume-${draft.volumes[index].id}-name`;
+	if (collection === "volumeMounts" && draft.volumeMounts[index]) return `mount-${draft.volumeMounts[index].id}-name`;
+	return "advanced-config-summary";
 }

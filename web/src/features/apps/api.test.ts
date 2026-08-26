@@ -21,4 +21,11 @@ describe("应用响应解码", () => {
   it("把空列表响应归一化", () => {
     expect(parseApps(null)).toEqual([]);
   });
+
+  it("集中解析只读高级配置", () => {
+    expect(parseApp({ ...app, config: { ports: [{ name: "http", container_port: 8080, protocol: "TCP", service_port: 80 }] } }).config?.ports?.[0]).toEqual({
+      name: "http", container_port: 8080, protocol: "TCP", service_port: 80,
+    });
+    expect(() => parseApp({ ...app, config: { ports: [{ name: "http", container_port: "8080" }] } })).toThrow();
+  });
 });

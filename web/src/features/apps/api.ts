@@ -1,5 +1,6 @@
 import { ApiError, request } from "../../lib/api";
 import { projectAppsPath } from "../../lib/routes";
+import { parseAppConfig } from "./config";
 import type { App, CreateAppInput, LifecycleAction } from "./types";
 
 export function parseApp(value: unknown): App {
@@ -19,7 +20,7 @@ export function parseApp(value: unknown): App {
   )) {
     throw new ApiError(-1, "服务器返回的应用数据无效，请重试。");
   }
-  return value as unknown as App;
+  return app.config === undefined ? value as App : { ...(value as App), config: parseAppConfig(app.config) };
 }
 
 export function parseApps(data: unknown): App[] {

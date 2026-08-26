@@ -1,15 +1,12 @@
 package handler
 
 import (
-	"regexp"
 	"strconv"
-	"strings"
 
+	"github.com/cuihe500/astro/internal/model"
 	"github.com/cuihe500/astro/internal/service"
 	"github.com/gin-gonic/gin"
 )
-
-var appNamePattern = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`)
 
 // AppHandler 应用处理器
 type AppHandler struct {
@@ -23,10 +20,17 @@ func NewAppHandler() *AppHandler {
 
 // CreateAppRequest 创建应用请求
 type CreateAppRequest struct {
-	Name     string `json:"name" binding:"required,min=1,max=63" example:"my-nginx"`
-	Image    string `json:"image" binding:"required,max=256" example:"nginx:latest"`
-	Replicas int    `json:"replicas" binding:"required,min=1,max=10" example:"2"`
-	Port     int    `json:"port" binding:"omitempty,min=1,max=65535" example:"80"`
+	Name     string          `json:"name" binding:"required,min=1,max=63" example:"my-nginx"`
+	Image    string          `json:"image" binding:"required,max=256" example:"nginx:latest"`
+	Replicas int             `json:"replicas" binding:"required,min=1,max=10" example:"2"`
+	Port     *int32          `json:"port,omitempty" binding:"omitempty,min=1,max=65535" example:"80"`
+	Config   model.AppConfig `json:"config,omitempty"`
+}
+
+// AppDetailResponse 应用详情响应。
+type AppDetailResponse struct {
+	model.App
+	Config model.AppConfig `json:"config"`
 }
 
 // AppLogsResponse 日志响应
@@ -36,14 +40,14 @@ type AppLogsResponse struct {
 
 // CreateApp 创建应用
 // @Summary 创建应用
-// @Description 在指定项目中创建一个新的容器应用
+// @Description 在指定项目中创建单容器应用，可通过受控 config 设置常用 Pod 参数
 // @Tags 应用
 // @Accept json
 // @Produce json
 // @Security Bearer
 // @Param project_id path int true "项目ID"
 // @Param request body CreateAppRequest true "应用信息"
-// @Success 200 {object} Response "创建成功"
+// @Success 200 {object} Response{data=AppDetailResponse} "创建成功"
 // @Failure 400 {object} Response "参数错误"
 // @Failure 401 {object} Response "未授权"
 // @Router /projects/{project_id}/apps [post]
@@ -52,15 +56,9 @@ func (h *AppHandler) CreateApp(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var req CreateAppRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	req, err := decodeAndValidateCreateAppRequest(c.Request.Body)
+	if err != nil {
 		BadRequest(c, "参数错误: "+err.Error())
-		return
-	}
-	req.Name = strings.TrimSpace(req.Name)
-	req.Image = strings.TrimSpace(req.Image)
-	if !appNamePattern.MatchString(req.Name) || req.Image == "" {
-		BadRequest(c, "应用名称或容器镜像无效")
 		return
 	}
 	userID, ok := authenticatedUserID(c)
@@ -69,14 +67,14 @@ func (h *AppHandler) CreateApp(c *gin.Context) {
 	}
 
 	app, err := h.svc.CreateApp(c.Request.Context(), service.CreateAppRequest{
-		Name: req.Name, Image: req.Image, Replicas: req.Replicas, Port: req.Port,
+		Name: req.Name, Image: req.Image, Replicas: req.Replicas, Config: req.Config,
 		ProjectID: projectID, UserID: userID,
 	})
 	if err != nil {
 		HandleError(c, err)
 		return
 	}
-	Success(c, app)
+	Success(c, appDetailResponse(app))
 }
 
 // GetApps 获取应用列表
@@ -86,7 +84,7 @@ func (h *AppHandler) CreateApp(c *gin.Context) {
 // @Produce json
 // @Security Bearer
 // @Param project_id path int true "项目ID"
-// @Success 200 {object} Response "成功"
+// @Success 200 {object} Response{data=[]model.App} "成功"
 // @Failure 401 {object} Response "未授权"
 // @Router /projects/{project_id}/apps [get]
 func (h *AppHandler) GetApps(c *gin.Context) {
@@ -114,7 +112,7 @@ func (h *AppHandler) GetApps(c *gin.Context) {
 // @Security Bearer
 // @Param project_id path int true "项目ID"
 // @Param id path int true "应用ID"
-// @Success 200 {object} Response "成功"
+// @Success 200 {object} Response{data=AppDetailResponse} "成功"
 // @Failure 401 {object} Response "未授权"
 // @Failure 404 {object} Response "应用不存在"
 // @Router /projects/{project_id}/apps/{id} [get]
@@ -128,7 +126,11 @@ func (h *AppHandler) GetApp(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-	Success(c, app)
+	Success(c, appDetailResponse(app))
+}
+
+func appDetailResponse(app *model.App) AppDetailResponse {
+	return AppDetailResponse{App: *app, Config: app.Config}
 }
 
 // DeleteApp 删除应用

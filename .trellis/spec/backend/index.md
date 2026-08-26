@@ -14,6 +14,7 @@
 | [质量规范](./quality-guidelines.md) | Makefile 命令、校验/权限分层、禁止模式 | ✅ 已填写 |
 | [日志规范](./logging-guidelines.md) | pkg/logger 用法、级别、敏感信息 | ✅ 已填写 |
 | [认证规范](./auth-guidelines.md) | JWT 与 OAuth2/OIDC 登录契约、状态校验、身份映射 | ✅ 已填写 |
+| [应用 Pod 创建契约](./app-pod-creation.md) | 受控 Pod 参数、JSON 持久化、资源预检与响应边界 | ✅ 已填写 |
 | [发布部署规范](./deployment-guidelines.md) | 运行时环境、镜像 digest、主机部署与测试/生产隔离契约 | ✅ 已填写 |
 
 ---

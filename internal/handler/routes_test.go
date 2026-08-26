@@ -64,6 +64,8 @@ func TestProjectAndAppRoutesRejectInvalidInput(t *testing.T) {
 		{method: http.MethodPost, path: "/api/v1/projects", body: `{"name":"   "}`},
 		{method: http.MethodGet, path: "/api/v1/projects/1/apps/0"},
 		{method: http.MethodPost, path: "/api/v1/projects/1/apps", body: `{"name":"INVALID","image":"nginx:latest","replicas":1}`},
+		{method: http.MethodPost, path: "/api/v1/projects/1/apps", body: `{"name":"demo","image":"nginx:latest","replicas":1,"hostNetwork":true}`},
+		{method: http.MethodPost, path: "/api/v1/projects/1/apps", body: `{"name":"demo","image":"nginx:latest","replicas":1}{}`},
 	}
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {

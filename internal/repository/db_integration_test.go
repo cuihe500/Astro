@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -119,7 +120,8 @@ func closeDatabase(t *testing.T, database *gorm.DB) {
 
 func assertProjectOwnershipSchema(t *testing.T, database *gorm.DB) {
 	t.Helper()
-	if !database.Migrator().HasTable(&model.Project{}) || !database.Migrator().HasColumn(&model.App{}, "project_id") {
+	if !database.Migrator().HasTable(&model.Project{}) || !database.Migrator().HasColumn(&model.App{}, "project_id") ||
+		!database.Migrator().HasColumn(&model.App{}, "config") {
 		t.Fatal("当前项目归属 schema 不完整")
 	}
 	columns, err := database.Migrator().ColumnTypes(&model.App{})
@@ -171,7 +173,12 @@ func assertProjectOwnershipConstraints(t *testing.T) {
 	}
 
 	appRepository := NewAppRepository()
-	app := &model.App{Name: "same-app", Image: "nginx:alpine", Replicas: 1, ProjectID: projectOne.ID}
+	servicePort := int32(80)
+	config := model.AppConfig{
+		Command: []string{"/bin/demo"},
+		Ports:   []model.AppPort{{Name: "http", ContainerPort: 8080, Protocol: "TCP", ServicePort: &servicePort}},
+	}
+	app := &model.App{Name: "same-app", Image: "nginx:alpine", Replicas: 1, ProjectID: projectOne.ID, Config: config}
 	if _, err := appRepository.CreateInProject(app, userOne.ID, func(string) error {
 		var visibleCount int64
 		if err := DB.Model(&model.App{}).Where("id = ?", app.ID).Count(&visibleCount).Error; err != nil {
@@ -183,6 +190,20 @@ func assertProjectOwnershipConstraints(t *testing.T) {
 		return nil
 	}); err != nil {
 		t.Fatalf("在项目内创建应用失败: %v", err)
+	}
+	storedApp, err := appRepository.GetByProjectAndID(projectOne.ID, app.ID)
+	if err != nil {
+		t.Fatalf("读取高级配置失败: %v", err)
+	}
+	if !reflect.DeepEqual(storedApp.Config, config) {
+		t.Fatalf("高级配置往返不一致: got %#v, want %#v", storedApp.Config, config)
+	}
+	if err := DB.Model(&model.App{}).Where("id = ?", app.ID).UpdateColumn("config", nil).Error; err != nil {
+		t.Fatalf("模拟旧 NULL 配置失败: %v", err)
+	}
+	storedApp, err = appRepository.GetByProjectAndID(projectOne.ID, app.ID)
+	if err != nil || !reflect.DeepEqual(storedApp.Config, model.AppConfig{}) {
+		t.Fatalf("旧 NULL 配置未归一化为空配置: app=%#v err=%v", storedApp, err)
 	}
 	if err := DB.Create(&model.App{Name: app.Name, Image: app.Image, Replicas: 1, ProjectID: projectOne.ID}).Error; !errors.Is(err, gorm.ErrDuplicatedKey) {
 		t.Fatalf("同一项目应用重名应触发唯一约束: %v", err)

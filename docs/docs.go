@@ -387,7 +387,22 @@ const docTemplate = `{
                     "200": {
                         "description": "成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.App"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
@@ -404,7 +419,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "在指定项目中创建一个新的容器应用",
+                "description": "在指定项目中创建单容器应用，可通过受控 config 设置常用 Pod 参数",
                 "consumes": [
                     "application/json"
                 ],
@@ -437,7 +452,19 @@ const docTemplate = `{
                     "200": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.AppDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -490,7 +517,19 @@ const docTemplate = `{
                     "200": {
                         "description": "成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.AppDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
@@ -790,6 +829,38 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.AppDetailResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/model.AppConfig"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.AppLogsResponse": {
             "type": "object",
             "properties": {
@@ -806,6 +877,9 @@ const docTemplate = `{
                 "replicas"
             ],
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/model.AppConfig"
+                },
                 "image": {
                     "type": "string",
                     "maxLength": 256,
@@ -913,6 +987,379 @@ const docTemplate = `{
                 },
                 "data": {},
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.App": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AppConfig": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "env": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EnvVar"
+                    }
+                },
+                "env_from": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EnvFromSource"
+                    }
+                },
+                "image_pull_policy": {
+                    "type": "string"
+                },
+                "image_pull_secrets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "liveness_probe": {
+                    "$ref": "#/definitions/model.Probe"
+                },
+                "ports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AppPort"
+                    }
+                },
+                "readiness_probe": {
+                    "$ref": "#/definitions/model.Probe"
+                },
+                "resources": {
+                    "$ref": "#/definitions/model.ResourceRequirements"
+                },
+                "security_context": {
+                    "$ref": "#/definitions/model.SecurityContext"
+                },
+                "startup_probe": {
+                    "$ref": "#/definitions/model.Probe"
+                },
+                "termination_grace_period_seconds": {
+                    "type": "integer"
+                },
+                "volume_mounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.VolumeMount"
+                    }
+                },
+                "volumes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Volume"
+                    }
+                },
+                "working_dir": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AppPort": {
+            "type": "object",
+            "properties": {
+                "container_port": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "service_port": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.EmptyDirVolumeSource": {
+            "type": "object",
+            "properties": {
+                "medium": {
+                    "type": "string"
+                },
+                "size_limit": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.EnvFromSource": {
+            "type": "object",
+            "properties": {
+                "config_map_ref": {
+                    "$ref": "#/definitions/model.NamedResourceSource"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "secret_ref": {
+                    "$ref": "#/definitions/model.NamedResourceSource"
+                }
+            }
+        },
+        "model.EnvVar": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "value_from": {
+                    "$ref": "#/definitions/model.EnvVarSource"
+                }
+            }
+        },
+        "model.EnvVarSource": {
+            "type": "object",
+            "properties": {
+                "config_map_key_ref": {
+                    "$ref": "#/definitions/model.KeyReference"
+                },
+                "secret_key_ref": {
+                    "$ref": "#/definitions/model.KeyReference"
+                }
+            }
+        },
+        "model.ExecAction": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.HTTPGetAction": {
+            "type": "object",
+            "properties": {
+                "http_headers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.HTTPHeader"
+                    }
+                },
+                "path": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "scheme": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.HTTPHeader": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.KeyReference": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NamedResourceSource": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PersistentVolumeClaimSource": {
+            "type": "object",
+            "properties": {
+                "claim_name": {
+                    "type": "string"
+                },
+                "read_only": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.Probe": {
+            "type": "object",
+            "properties": {
+                "exec": {
+                    "$ref": "#/definitions/model.ExecAction"
+                },
+                "failure_threshold": {
+                    "type": "integer"
+                },
+                "http_get": {
+                    "$ref": "#/definitions/model.HTTPGetAction"
+                },
+                "initial_delay_seconds": {
+                    "type": "integer"
+                },
+                "period_seconds": {
+                    "type": "integer"
+                },
+                "success_threshold": {
+                    "type": "integer"
+                },
+                "tcp_socket": {
+                    "$ref": "#/definitions/model.TCPSocketAction"
+                },
+                "timeout_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.ResourceRequirements": {
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "$ref": "#/definitions/model.ResourceValues"
+                },
+                "requests": {
+                    "$ref": "#/definitions/model.ResourceValues"
+                }
+            }
+        },
+        "model.ResourceValues": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "type": "string"
+                },
+                "memory": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SecurityContext": {
+            "type": "object",
+            "properties": {
+                "allow_privilege_escalation": {
+                    "type": "boolean"
+                },
+                "drop_capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "fs_group": {
+                    "type": "integer"
+                },
+                "read_only_root_filesystem": {
+                    "type": "boolean"
+                },
+                "run_as_group": {
+                    "type": "integer"
+                },
+                "run_as_non_root": {
+                    "type": "boolean"
+                },
+                "run_as_user": {
+                    "type": "integer"
+                },
+                "seccomp_profile": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TCPSocketAction": {
+            "type": "object",
+            "properties": {
+                "port": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Volume": {
+            "type": "object",
+            "properties": {
+                "config_map": {
+                    "$ref": "#/definitions/model.NamedResourceSource"
+                },
+                "empty_dir": {
+                    "$ref": "#/definitions/model.EmptyDirVolumeSource"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "persistent_volume_claim": {
+                    "$ref": "#/definitions/model.PersistentVolumeClaimSource"
+                },
+                "secret": {
+                    "$ref": "#/definitions/model.NamedResourceSource"
+                }
+            }
+        },
+        "model.VolumeMount": {
+            "type": "object",
+            "properties": {
+                "mount_path": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "read_only": {
+                    "type": "boolean"
+                },
+                "sub_path": {
                     "type": "string"
                 }
             }
