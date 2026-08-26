@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/directory-structure.md","reason":"遵循 handler→service→repository/k8s 分层并保持单一 AppConfig 数据流"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"使用 GORM AutoMigrate、JSON serializer、项目作用域查询与现有事务补偿"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"保持 errcode 分段、严格处理引用预检和补偿错误且不泄露 Secret"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"落实 handler 校验、权限、Swagger、测试和 Makefile 命令要求"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对配置从 API 到数据库、Kubernetes 和 Web 的完整往返"}
+{"file":".trellis/tasks/08-26-pod-creation-parameters/research/repository-evidence.md","reason":"复用现有创建链路、测试边界和 UI 可访问性结论"}
