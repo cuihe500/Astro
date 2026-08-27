@@ -620,7 +620,11 @@ POST /api/v1/login
 | POST | `/api/v1/projects/{project_id}/apps/{id}/restart` | 重启应用 |
 | GET | `/api/v1/projects/{project_id}/apps/{id}/logs?lines=100` | 获取最近 1-1000 行日志 |
 
-项目创建请求只包含 `name`。应用创建请求包含 `name`、`image`、`replicas` 与可选 `port`；项目由路径参数确定，应用响应使用 `project_id` 表示唯一归属，不再复制用户 ID 或 Namespace。
+项目创建请求只包含 `name`。应用创建请求包含 `name`、`image`、`replicas`、兼容字段 `port` 与可选 `config`；项目由路径参数确定，应用响应使用 `project_id` 表示唯一归属，不再复制用户 ID 或 Namespace。
+
+`config` 是 Astro 自有的单容器白名单契约，支持命令/参数、环境变量与 ConfigMap/Secret 引用、CPU/内存资源、多端口、HTTP/TCP/Exec 探针、`emptyDir`/已有 PVC/ConfigMap/Secret、非特权安全上下文、终止宽限期和 imagePullSecret。它不接收原生 `PodSpec`、`hostPath`、特权能力、高级调度或外部 Service。旧 `port` 在 handler 归一化为一个 TCP 容器端口及同值 Service 端口，不能与 `config.ports` 共存。
+
+创建请求使用严格 JSON 解码并限制为 64 KiB；名称、数量、路径、端口、Quantity、one-of 与跨字段关系均在 handler 校验。Service 在事务前通过 metadata client 读取项目 Namespace 内 PVC、ConfigMap 与 Secret 的 `PartialObjectMetadata`，不读取 Secret data。引用通过后，配置作为 JSON 随 App 保存并映射到一个 Deployment 和至多一个多端口 ClusterIP Service；详情显式返回配置，列表仍只返回摘要。Web 使用默认折叠的高级配置表单，详情只读展示；修改配置需删除并重建应用。
 
 Web 入口与 API 保持相同层级：`/projects` → `/projects/:projectId/apps` → 应用详情。未创建项目的用户只能看到创建项目引导。
 
@@ -705,6 +709,7 @@ CREATE TABLE apps (
   image         VARCHAR(256) NOT NULL COMMENT '镜像地址',
   replicas      INT DEFAULT 1 COMMENT '副本数',
   status        VARCHAR(32) DEFAULT 'stopped' COMMENT '状态：pending/running/stopped/starting/restarting/unknown',
+  config        JSON NULL COMMENT '受控单容器配置',
   project_id    INT UNSIGNED NOT NULL COMMENT '所属项目ID',
   created_at    DATETIME NOT NULL COMMENT '创建时间',
   updated_at    DATETIME NOT NULL COMMENT '更新时间',
@@ -717,6 +722,7 @@ CREATE TABLE apps (
 
 **字段说明**：
 - `project_id`: 必填外键，应用的用户归属和 Namespace 均通过项目确定。
+- `config`: 可空 JSON；旧记录的 NULL 按空配置读取，不保存 Secret 内容。
 - `idx_apps_project_name`: 同一项目内应用名唯一；应用删除使用硬删除，因此名称可复用。
 
 ### 6.4 ER 图
@@ -763,6 +769,7 @@ CREATE TABLE apps (
 │ image             │
 │ replicas          │
 │ status            │
+│ config             │
 └───────────────────┘
 ```
 

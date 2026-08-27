@@ -1,5 +1,26 @@
 basePath: /api/v1
 definitions:
+  handler.AppDetailResponse:
+    properties:
+      config:
+        $ref: '#/definitions/model.AppConfig'
+      created_at:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: integer
+      replicas:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   handler.AppLogsResponse:
     properties:
       logs:
@@ -7,6 +28,8 @@ definitions:
     type: object
   handler.CreateAppRequest:
     properties:
+      config:
+        $ref: '#/definitions/model.AppConfig'
       image:
         example: nginx:latest
         maxLength: 256
@@ -89,6 +112,248 @@ definitions:
         type: integer
       data: {}
       message:
+        type: string
+    type: object
+  model.App:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: integer
+      replicas:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.AppConfig:
+    properties:
+      args:
+        items:
+          type: string
+        type: array
+      command:
+        items:
+          type: string
+        type: array
+      env:
+        items:
+          $ref: '#/definitions/model.EnvVar'
+        type: array
+      env_from:
+        items:
+          $ref: '#/definitions/model.EnvFromSource'
+        type: array
+      image_pull_policy:
+        type: string
+      image_pull_secrets:
+        items:
+          type: string
+        type: array
+      liveness_probe:
+        $ref: '#/definitions/model.Probe'
+      ports:
+        items:
+          $ref: '#/definitions/model.AppPort'
+        type: array
+      readiness_probe:
+        $ref: '#/definitions/model.Probe'
+      resources:
+        $ref: '#/definitions/model.ResourceRequirements'
+      security_context:
+        $ref: '#/definitions/model.SecurityContext'
+      startup_probe:
+        $ref: '#/definitions/model.Probe'
+      termination_grace_period_seconds:
+        type: integer
+      volume_mounts:
+        items:
+          $ref: '#/definitions/model.VolumeMount'
+        type: array
+      volumes:
+        items:
+          $ref: '#/definitions/model.Volume'
+        type: array
+      working_dir:
+        type: string
+    type: object
+  model.AppPort:
+    properties:
+      container_port:
+        type: integer
+      name:
+        type: string
+      protocol:
+        type: string
+      service_port:
+        type: integer
+    type: object
+  model.EmptyDirVolumeSource:
+    properties:
+      medium:
+        type: string
+      size_limit:
+        type: string
+    type: object
+  model.EnvFromSource:
+    properties:
+      config_map_ref:
+        $ref: '#/definitions/model.NamedResourceSource'
+      prefix:
+        type: string
+      secret_ref:
+        $ref: '#/definitions/model.NamedResourceSource'
+    type: object
+  model.EnvVar:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+      value_from:
+        $ref: '#/definitions/model.EnvVarSource'
+    type: object
+  model.EnvVarSource:
+    properties:
+      config_map_key_ref:
+        $ref: '#/definitions/model.KeyReference'
+      secret_key_ref:
+        $ref: '#/definitions/model.KeyReference'
+    type: object
+  model.ExecAction:
+    properties:
+      command:
+        items:
+          type: string
+        type: array
+    type: object
+  model.HTTPGetAction:
+    properties:
+      http_headers:
+        items:
+          $ref: '#/definitions/model.HTTPHeader'
+        type: array
+      path:
+        type: string
+      port:
+        type: integer
+      scheme:
+        type: string
+    type: object
+  model.HTTPHeader:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    type: object
+  model.KeyReference:
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+    type: object
+  model.NamedResourceSource:
+    properties:
+      name:
+        type: string
+    type: object
+  model.PersistentVolumeClaimSource:
+    properties:
+      claim_name:
+        type: string
+      read_only:
+        type: boolean
+    type: object
+  model.Probe:
+    properties:
+      exec:
+        $ref: '#/definitions/model.ExecAction'
+      failure_threshold:
+        type: integer
+      http_get:
+        $ref: '#/definitions/model.HTTPGetAction'
+      initial_delay_seconds:
+        type: integer
+      period_seconds:
+        type: integer
+      success_threshold:
+        type: integer
+      tcp_socket:
+        $ref: '#/definitions/model.TCPSocketAction'
+      timeout_seconds:
+        type: integer
+    type: object
+  model.ResourceRequirements:
+    properties:
+      limits:
+        $ref: '#/definitions/model.ResourceValues'
+      requests:
+        $ref: '#/definitions/model.ResourceValues'
+    type: object
+  model.ResourceValues:
+    properties:
+      cpu:
+        type: string
+      memory:
+        type: string
+    type: object
+  model.SecurityContext:
+    properties:
+      allow_privilege_escalation:
+        type: boolean
+      drop_capabilities:
+        items:
+          type: string
+        type: array
+      fs_group:
+        type: integer
+      read_only_root_filesystem:
+        type: boolean
+      run_as_group:
+        type: integer
+      run_as_non_root:
+        type: boolean
+      run_as_user:
+        type: integer
+      seccomp_profile:
+        type: string
+    type: object
+  model.TCPSocketAction:
+    properties:
+      port:
+        type: integer
+    type: object
+  model.Volume:
+    properties:
+      config_map:
+        $ref: '#/definitions/model.NamedResourceSource'
+      empty_dir:
+        $ref: '#/definitions/model.EmptyDirVolumeSource'
+      name:
+        type: string
+      persistent_volume_claim:
+        $ref: '#/definitions/model.PersistentVolumeClaimSource'
+      secret:
+        $ref: '#/definitions/model.NamedResourceSource'
+    type: object
+  model.VolumeMount:
+    properties:
+      mount_path:
+        type: string
+      name:
+        type: string
+      read_only:
+        type: boolean
+      sub_path:
         type: string
     type: object
 host: localhost:8080
@@ -327,7 +592,14 @@ paths:
         "200":
           description: 成功
           schema:
-            $ref: '#/definitions/handler.Response'
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.App'
+                  type: array
+              type: object
         "401":
           description: 未授权
           schema:
@@ -340,7 +612,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 在指定项目中创建一个新的容器应用
+      description: 在指定项目中创建单容器应用，可通过受控 config 设置常用 Pod 参数
       parameters:
       - description: 项目ID
         in: path
@@ -359,7 +631,12 @@ paths:
         "200":
           description: 创建成功
           schema:
-            $ref: '#/definitions/handler.Response'
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.AppDetailResponse'
+              type: object
         "400":
           description: 参数错误
           schema:
@@ -426,7 +703,12 @@ paths:
         "200":
           description: 成功
           schema:
-            $ref: '#/definitions/handler.Response'
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.AppDetailResponse'
+              type: object
         "401":
           description: 未授权
           schema:

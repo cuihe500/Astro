@@ -6,6 +6,7 @@ import { errorMessage } from "../../../lib/api";
 import { projectAppsPath } from "../../../lib/routes";
 import { deleteApp, getApp, getAppLogs, runLifecycleAction } from "../api";
 import { StatusBadge } from "../components/StatusBadge";
+import { AppConfigDetails } from "../components/AppConfigDetails";
 import type { App, LifecycleAction } from "../types";
 
 function formatDate(value: string): string {
@@ -193,6 +194,8 @@ export function AppDetailPage() {
             <div><dt>更新时间</dt><dd>{formatDate(app.updated_at)}</dd></div>
           </dl>
         </section>
+
+        <AppConfigDetails config={app.config} />
 
         <section className="detail-section" aria-labelledby="actions-title">
           <div className="section-heading"><h2 id="actions-title">应用操作</h2></div>

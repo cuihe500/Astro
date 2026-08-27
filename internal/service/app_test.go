@@ -18,11 +18,13 @@ type fakeAppStore struct {
 	appLookupErr  error
 	nameLookupErr error
 	createErr     error
+	createCalls   int
 	visible       bool
 	deletedID     uint
 }
 
 func (s *fakeAppStore) CreateInProject(app *model.App, _ uint, beforeCommit func(string) error) (*model.Project, error) {
+	s.createCalls++
 	app.ID = 11
 	if err := beforeCommit(s.project.Namespace); err != nil {
 		return nil, err
@@ -32,6 +34,46 @@ func (s *fakeAppStore) CreateInProject(app *model.App, _ uint, beforeCommit func
 	}
 	s.visible = true
 	return s.project, nil
+}
+
+func TestCreateAppValidatesReferencesBeforeTransaction(t *testing.T) {
+	project := &model.Project{BaseModel: model.BaseModel{ID: 3}, UserID: 7, Namespace: "astro-project-test"}
+	repo := &fakeAppStore{project: project, nameLookupErr: gorm.ErrRecordNotFound}
+	adapter := &fakeAppAdapter{validateReferencesErr: errors.New("secret missing")}
+	config := model.AppConfig{ImagePullSecrets: []string{"registry-secret"}}
+
+	_, err := newAppService(repo, &fakeProjectReader{project: project}, adapter).CreateApp(
+		context.Background(),
+		CreateAppRequest{Name: "demo", Image: "nginx:latest", Replicas: 1, Config: config, ProjectID: 3, UserID: 7},
+	)
+	assertErrorCode(t, err, errcode.ErrAppCreateFailed)
+	if repo.createCalls != 0 {
+		t.Fatal("引用预检失败后不应启动数据库事务")
+	}
+	if adapter.validatedNamespace != project.Namespace || len(adapter.validatedConfig.ImagePullSecrets) != 1 {
+		t.Fatal("引用预检未使用已授权项目命名空间和完整配置")
+	}
+}
+
+func TestCreateAppPersistsAndMapsNormalizedConfig(t *testing.T) {
+	project := &model.Project{BaseModel: model.BaseModel{ID: 3}, UserID: 7, Namespace: "astro-project-test"}
+	repo := &fakeAppStore{project: project, nameLookupErr: gorm.ErrRecordNotFound}
+	adapter := &fakeAppAdapter{}
+	servicePort := int32(80)
+	config := model.AppConfig{Ports: []model.AppPort{{
+		Name: "http", ContainerPort: 8080, Protocol: "TCP", ServicePort: &servicePort,
+	}}}
+
+	app, err := newAppService(repo, &fakeProjectReader{project: project}, adapter).CreateApp(
+		context.Background(),
+		CreateAppRequest{Name: "demo", Image: "nginx:latest", Replicas: 1, Config: config, ProjectID: 3, UserID: 7},
+	)
+	if err != nil {
+		t.Fatalf("创建应用失败: %v", err)
+	}
+	if len(app.Config.Ports) != 1 || len(adapter.createdSpec.Config.Ports) != 1 {
+		t.Fatal("配置未同时写入应用模型和 Kubernetes 规格")
+	}
 }
 
 func (s *fakeAppStore) Delete(id uint) error {

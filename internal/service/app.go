@@ -49,18 +49,19 @@ type CreateAppRequest struct {
 	Name      string
 	Image     string
 	Replicas  int
-	Port      int
+	Config    model.AppConfig
 	ProjectID uint
 	UserID    uint
 }
 
 // CreateApp 创建应用
 func (s *AppService) CreateApp(ctx context.Context, req CreateAppRequest) (*model.App, error) {
-	if _, err := s.getOwnedProject(req.ProjectID, req.UserID); err != nil {
+	project, err := s.getOwnedProject(req.ProjectID, req.UserID)
+	if err != nil {
 		return nil, err
 	}
 
-	_, err := s.repo.GetByProjectAndName(req.ProjectID, req.Name)
+	_, err = s.repo.GetByProjectAndName(req.ProjectID, req.Name)
 	if err == nil {
 		return nil, errcode.New(errcode.ErrAppExists)
 	}
@@ -73,18 +74,22 @@ func (s *AppService) CreateApp(ctx context.Context, req CreateAppRequest) (*mode
 		Image:     req.Image,
 		Replicas:  req.Replicas,
 		Status:    "pending",
+		Config:    req.Config,
 		ProjectID: req.ProjectID,
+	}
+	if err := s.adapter.ValidateAppReferences(ctx, project.Namespace, req.Config); err != nil {
+		return nil, errcode.NewWithMsg(errcode.ErrAppCreateFailed, "引用资源校验失败: "+err.Error())
 	}
 	var createdNamespace string
 	resourcesTouched := false
-	project, err := s.repo.CreateInProject(app, req.UserID, func(namespace string) error {
+	project, err = s.repo.CreateInProject(app, req.UserID, func(namespace string) error {
 		createdNamespace = namespace
 		spec := k8s.AppSpec{
 			Name:      req.Name,
 			Namespace: namespace,
 			Image:     req.Image,
 			Replicas:  int32(req.Replicas),
-			Port:      int32(req.Port),
+			Config:    req.Config,
 		}
 		resourcesTouched = true
 		if createErr := s.adapter.CreateApp(ctx, spec); createErr != nil {

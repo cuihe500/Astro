@@ -4,21 +4,31 @@ import (
 	"context"
 
 	"github.com/cuihe500/astro/internal/k8s"
+	"github.com/cuihe500/astro/internal/model"
 )
 
 type fakeAppAdapter struct {
-	ensureNamespaceErr  error
-	deleteNamespaceErr  error
-	createAppErr        error
-	deleteAppErr        error
-	createAppFunc       func(k8s.AppSpec) error
-	ensuredNamespace    string
-	createdSpec         k8s.AppSpec
-	deleteNamespaceCtx  context.Context
-	deleteAppCtx        context.Context
-	deletedNamespace    string
-	deletedAppName      string
-	deletedAppNamespace string
+	ensureNamespaceErr    error
+	deleteNamespaceErr    error
+	createAppErr          error
+	deleteAppErr          error
+	createAppFunc         func(k8s.AppSpec) error
+	validateReferencesErr error
+	validatedConfig       model.AppConfig
+	validatedNamespace    string
+	ensuredNamespace      string
+	createdSpec           k8s.AppSpec
+	deleteNamespaceCtx    context.Context
+	deleteAppCtx          context.Context
+	deletedNamespace      string
+	deletedAppName        string
+	deletedAppNamespace   string
+}
+
+func (a *fakeAppAdapter) ValidateAppReferences(_ context.Context, namespace string, config model.AppConfig) error {
+	a.validatedNamespace = namespace
+	a.validatedConfig = config
+	return a.validateReferencesErr
 }
 
 func (a *fakeAppAdapter) EnsureNamespace(_ context.Context, namespace string) error {
