@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
-- **Last Active**: 2026-08-25
+- **Total Sessions**: 6
+- **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~127 | Active |
+| `journal-1.md` | ~150 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-08-27 | 完成 Pod 创建参数 | `54d9dcb`, `b1b14d4`, `8d075c4` | `main` |
 | 5 | 2026-08-25 | 修复空状态按钮加号颜色 | `1b82c18`, `07061c4` | `main` |
 | 4 | 2026-08-25 | 归档全部存量 Trellis 任务 | - | `main` |
 | 3 | 2026-08-25 | 完成项目级资源归属交付 | `00167e6`, `a18f638`, `d0e369f`, `79ea4b4` | `main` |

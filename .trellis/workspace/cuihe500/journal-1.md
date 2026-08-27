@@ -125,3 +125,26 @@ PR #4 已合并，Issue #3 已关闭，main 流水线成功构建 ARM64 镜像�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: 完成 Pod 创建参数
+
+**Date**: 2026-08-27
+**Task**: 完成 Pod 创建参数
+**Branch**: `main`
+
+### Summary
+
+扩展应用创建 API 与 Web，支持受控完整单容器 Pod 参数；完成校验、持久化、Kubernetes 映射、文档与测试，PR #8 已合并。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `54d9dcb` | (see git log) |
+| `b1b14d4` | (see git log) |
+| `8d075c4` | (see git log) |
+
+### Status
+
+[OK] **Completed**
